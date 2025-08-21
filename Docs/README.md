@@ -452,10 +452,20 @@ flutter build linux --release
 - **GitHub Issues:** [مشکلات و پیشنهادات](https://github.com/yourusername/ai-123-flutter/issues)
 
 ### **مستندات اضافی**
-- [راهنمای API](./api-guide.md)
-- [راهنمای Database](./database-guide.md)
-- [راهنمای UI Components](./ui-components.md)
-- [FAQ - سوالات متداول](./faq.md)
+- 📖 [راهنمای کامل پروژه](./README.md)
+- 🔌 [راهنمای API](./api-guide.md)
+- 🗄️ [راهنمای Database](./database-guide.md)
+- 🎨 [راهنمای UI Components](./ui-components.md)
+- ❓ [FAQ - سوالات متداول](./faq.md)
+- 📝 [CHANGELOG - تاریخچه تغییرات](./CHANGELOG.md)
+- 🤝 [راهنمای مشارکت](./CONTRIBUTING.md)
+- 📦 **[راهنمای Git و GitHub](./git-github-guide.md)** - جدید!
+
+### **اسکریپت‌های خودکار**
+- 🚀 [Scripts مدیریت پروژه](../scripts/README.md)
+- ⚡ Quick Push: `./scripts/quick-push.sh "commit message"`
+- 📦 Create Release: `./scripts/create-release.sh patch`
+- 🔄 Sync Upstream: `./scripts/sync-upstream.sh`
 
 ---
 

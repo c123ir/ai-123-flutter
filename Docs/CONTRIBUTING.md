@@ -49,6 +49,37 @@ flutter --version  # باید 3.8.1+ باشد
 # Git
 git --version
 
+# تنظیمات Git (اختیاری اما توصیه شده)
+git config --global user.name "نام شما"
+git config --global user.email "email@example.com"
+git config --global init.defaultBranch main
+git config --global pull.rebase true
+git config --global core.autocrlf input
+```
+
+#### Clone و Setup:
+```bash
+# 1. Fork کردن پروژه در GitHub
+# از طریق وب‌سایت GitHub روی Fork کلیک کنید
+
+# 2. Clone کردن fork شده
+git clone https://github.com/YOUR_USERNAME/ai-123-flutter.git
+cd ai-123-flutter
+
+# 3. اضافه کردن upstream
+git remote add upstream https://github.com/c123ir/ai-123-flutter.git
+git remote -v  # بررسی remote ها
+
+# 4. نصب dependencies
+flutter pub get
+
+# 5. اجرای تست ها
+flutter test
+
+# 6. اجرای برنامه
+flutter run
+```
+
 # IDE
 # Android Studio یا VS Code
 ```
