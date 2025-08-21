@@ -1,6 +1,21 @@
 # 🤖 Smart Assistant 123 - هوشمند 123
 
-[![Flutter CI/CD](https://github.com/c123ir/ai-123-flutter/actions/workflows/flutter.yml/badge.svg)](https://github.com/c123ir/ai-123-flutter/actions/workflows/flutter.yml)
+[![Flutter CI/CD](https://github.com/c123ir/ai-123-flutter├── models/            # مدل‌های داده
+│   ├── user.dart
+│   ├── product.dart
+│   ├── consultation.dart
+│   ├── ai_chat.dart
+│   ├── crm_contact.dart
+│   ├── sms_provider.dart    # جدید: مدل سامانه پیامک
+│   ├── sms_config.dart      # جدید: تنظیمات پیامک
+│   ├── sms_log.dart         # جدید: لاگ پیامک
+│   └── update_history.dart  # جدید: مدل تاریخچه بروزرسانیworkflows/flutter.yml/badge.svg)](https://github.com/c1- 📖 [راهنمای کامل](./Docs/README.md)
+- 🔌 [راهنمای API](./Docs/api-guide.md)
+- 🗄️ [راهنمای پایگاه داده](./Docs/database-guide.md)
+- 🎨 [راهنمای کامپوننت‌ها](./Docs/ui-components.md)
+- 📱 [مستندات سیستم پیامک](./Docs/SMS_Documentation.md) **جدید**
+- 🔢 [راهنمای سریع تبدیل اعداد فارسی](./Docs/persian_numbers_quick_guide.md) **جدید**
+- 📋 [سوالات متداول](./Docs/faq.md)i-123-flutter/actions/workflows/flutter.yml)
 [![Release](https://github.com/c123ir/ai-123-flutter/actions/workflows/release.yml/badge.svg)](https://github.com/c123ir/ai-123-flutter/actions/workflows/release.yml)
 [![Flutter Version](https://img.shields.io/badge/Flutter-3.8.1-blue.svg)](https://flutter.dev/)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
@@ -20,6 +35,8 @@
 - 📱 **سیستم مدیریت پیامک** با پشتیبانی چند سامانه
 - 📈 **آمار و گزارش‌گیری** جامع
 - 🔄 **GitHub Actions** برای CI/CD خودکار
+- 📋 **سیستم تاریخچه بروزرسانی** برای ردیابی تغییرات پروژه
+- 🔢 **تبدیل خودکار اعداد فارسی/عربی** به انگلیسی
 
 ## 🚀 مشاهده زنده
 
@@ -95,25 +112,34 @@ lib/
 │   ├── crm_contact.dart
 │   ├── sms_provider.dart    # جدید: مدل سامانه پیامک
 │   ├── sms_config.dart      # جدید: تنظیمات پیامک
-│   └── sms_log.dart         # جدید: لاگ پیامک
-├── services/          # لایه سرویس
-│   ├── user_service.dart
-│   ├── product_service.dart
-│   ├── ai_service.dart
+│   ├── sms_log.dart         # جدید: لاگ پیامک
+│   └── update_history.dart  # جدید: مدل تاریخچه بروزرسانی
+├── services/         # منطق کسب‌وکار
 │   ├── api_service.dart
-│   └── sms_service.dart     # جدید: سرویس مدیریت پیامک
-├── screens/           # صفحات اپلیکیشن
+│   ├── chat_service.dart
+│   ├── sms_service.dart            # جدید: سرویس مدیریت پیامک
+│   └── update_history_service.dart # جدید: سرویس تاریخچه بروزرسانی
+├── screens/          # صفحات اپلیکیشن
 │   ├── admin_dashboard.dart
-│   └── customer_app.dart
+│   ├── chat_screen.dart
+│   ├── sms_management_screen.dart  # جدید: صفحه مدیریت پیامک
+│   └── update_history_screen.dart  # جدید: صفحه تاریخچه بروزرسانی
 ├── widgets/           # کامپوننت‌های UI
 │   ├── user_profile.dart
 │   ├── product_card.dart
 │   ├── chat_widget.dart
-│   └── sms_panel.dart       # جدید: پنل مدیریت پیامک
+│   ├── sms_panel.dart       # جدید: پنل مدیریت پیامک
+│   ├── update_history_card.dart  # جدید: کارت نمایش بروزرسانی
+│   └── add_update_dialog.dart    # جدید: دیالوگ افزودن بروزرسانی
 ├── utils/             # ابزارهای کمکی
 │   ├── constants.dart
 │   ├── helpers.dart
-│   └── validators.dart
+│   ├── validators.dart
+│   └── persian_number_utils.dart  # جدید: تبدیل اعداد فارسی/عربی به انگلیسی
+├── scripts/           # اسکریپت‌های کمکی
+│   ├── auto_register_update.dart  # جدید: ثبت خودکار بروزرسانی
+│   ├── quick-push.sh
+│   └── create-release.sh
 └── main.dart
 
 .github/
@@ -179,6 +205,8 @@ example/              # مثال‌های کاربرد
 - 🔍 **لاگ جامع**: ثبت تمام فعالیت‌ها
 - 🎯 **انتخاب هوشمند**: انتخاب خودکار بهترین سامانه
 - 🧪 **تست اتصال**: آزمایش عملکرد سامانه‌ها
+- 🔢 **تبدیل اعداد هوشمند**: تبدیل خودکار اعداد فارسی/عربی به انگلیسی
+- ✅ **اعتبارسنجی شماره**: بررسی صحت شماره موبایل ایرانی
 
 ### 📡 سامانه‌های پشتیبانی شده
 - ✅ **سامانه ۰۰۹۸** (پیش‌فرض)
@@ -189,13 +217,18 @@ example/              # مثال‌های کاربرد
 ```dart
 import '../services/sms_service.dart';
 import '../widgets/sms_panel.dart';
+import '../utils/persian_number_utils.dart';
 
 // ارسال پیامک ساده
 final smsService = SmsService();
 await smsService.sendSms(
-  phone: '09123456789',
-  message: 'سلام! این یک پیامک تست است.'
+  phone: '۰۹۱۳۲۳۲۳۱۲۳',  // شماره فارسی (خودکار به انگلیسی تبدیل می‌شود)
+  message: 'سلام! کد تایید شما: ۱۲۳۴'  // اعداد فارسی خودکار تبدیل می‌شوند
 );
+
+// تبدیل دستی اعداد
+String englishPhone = PersianNumberUtils.formatIranianMobile('۰۹۱۳۲۳۲۳۱۲۳');
+String englishText = PersianNumberUtils.convertToEnglish('کد: ۱۲۳۴');
 
 // نمایش پنل مدیریت
 Navigator.push(
@@ -205,7 +238,8 @@ Navigator.push(
 ```
 
 ### 📋 مثال کامل
-فایل [`example/sms_example.dart`](./example/sms_example.dart) شامل مثال کاملی از استفاده از سیستم پیامک است.
+- فایل [`example/sms_example.dart`](./example/sms_example.dart) شامل مثال کاملی از استفاده از سیستم پیامک است.
+- فایل [`example/persian_numbers_example.dart`](./example/persian_numbers_example.dart) شامل مثال‌های کامل ابزار تبدیل اعداد فارسی است.
 
 ## 🔧 تنظیمات توسعه
 

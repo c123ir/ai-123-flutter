@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import '../widgets/dashboard_card.dart';
 import '../widgets/dashboard_graph.dart';
 import '../widgets/admin_sidebar.dart';
+import '../widgets/sms_panel.dart';
+import '../widgets/settings_page.dart';
+import 'update_history_screen.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
   const AdminDashboardScreen({super.key});
@@ -210,6 +213,27 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           ],
         ),
       );
+    }
+    // بررسی اگر منو مدیریت پیامک انتخاب شده باشد
+    else if (selectedIndex == 6) {
+      // مدیریت پیامک (ایندکس ۶ بعد از مدیریت تگ ها)
+      return Directionality(
+        textDirection: TextDirection.rtl,
+        child: SmsPanel(),
+      );
+    }
+    // بررسی اگر منو تنظیمات انتخاب شده باشد
+    else if (selectedIndex == 11) {
+      // تنظیمات (ایندکس ۱۱)
+      return Directionality(
+        textDirection: TextDirection.rtl,
+        child: SettingsPage(),
+      );
+    }
+    // بررسی اگر منو تاریخچه بروزرسانی انتخاب شده باشد
+    else if (selectedIndex == 12) {
+      // تاریخچه بروزرسانی (ایندکس ۱۲)
+      return const UpdateHistoryScreen();
     }
     // سایر منوها
     return Center(

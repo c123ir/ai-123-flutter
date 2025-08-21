@@ -20,7 +20,12 @@ class DatabaseHelper {
     final dbPath = await getDatabasesPath();
     final path = join(dbPath, filePath);
 
-    return await openDatabase(path, version: 1, onCreate: _createDB);
+    return await openDatabase(
+      path,
+      version: 2,
+      onCreate: _createDB,
+      onUpgrade: _upgradeDB,
+    );
   }
 
   Future _createDB(Database db, int version) async {
@@ -183,6 +188,25 @@ class DatabaseHelper {
       )
     ''');
 
+    // جدول تاریخچه بروزرسانی
+    await db.execute('''
+      CREATE TABLE update_history(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        title TEXT NOT NULL,
+        version TEXT NOT NULL,
+        shamsi_date TEXT NOT NULL,
+        shamsi_time TEXT NOT NULL,
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        user_problem TEXT NOT NULL,
+        solution_description TEXT NOT NULL,
+        user_comment TEXT,
+        tags TEXT,
+        priority TEXT DEFAULT 'medium',
+        category TEXT DEFAULT 'feature',
+        status TEXT DEFAULT 'completed'
+      )
+    ''');
+
     // اضافه کردن داده‌های اولیه
     await _insertInitialData(db);
   }
@@ -231,20 +255,102 @@ class DatabaseHelper {
       {'config_key': 'username', 'config_value': 'zsms8829', 'is_encrypted': 0},
       {
         'config_key': 'password',
-        'config_value': 'j494moo*O^HU',
+        'config_value': 'ZRtn63e*)Od1',
         'is_encrypted': 1,
       },
       {'config_key': 'from', 'config_value': '3000164545', 'is_encrypted': 0},
       {
         'config_key': 'api_url',
-        'config_value': 'https://api.0098sms.com/sendsms.aspx',
+        'config_value': 'http://0098sms.com/sendsmslink.aspx',
         'is_encrypted': 0,
       },
+      {'config_key': 'domain', 'config_value': '0098', 'is_encrypted': 0},
+      {'config_key': 'method', 'config_value': 'GET', 'is_encrypted': 0},
     ];
 
     for (final config in configs) {
       await db.insert('sms_configs', {'provider_id': providerId, ...config});
     }
+  }
+
+  /// بروزرسانی دیتابیس (Migration)
+  Future _upgradeDB(Database db, int oldVersion, int newVersion) async {
+    if (oldVersion < 2) {
+      // اضافه کردن جدول تاریخچه بروزرسانی در نسخه ۲
+      await db.execute('''
+        CREATE TABLE update_history(
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          title TEXT NOT NULL,
+          version TEXT NOT NULL,
+          shamsi_date TEXT NOT NULL,
+          shamsi_time TEXT NOT NULL,
+          created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+          user_problem TEXT NOT NULL,
+          solution_description TEXT NOT NULL,
+          user_comment TEXT,
+          tags TEXT,
+          priority TEXT DEFAULT 'medium',
+          category TEXT DEFAULT 'feature',
+          status TEXT DEFAULT 'completed'
+        )
+      ''');
+
+      // اضافه کردن بروزرسانی اولیه
+      await _insertInitialUpdateHistory(db);
+    }
+  }
+
+  /// اضافه کردن بروزرسانی‌های اولیه
+  Future _insertInitialUpdateHistory(Database db) async {
+    // بروزرسانی سیستم تبدیل اعداد فارسی
+    await db.insert('update_history', {
+      'title': 'اضافه کردن سیستم تبدیل اعداد فارسی',
+      'version': '1.2.0',
+      'shamsi_date': '۱۴۰۴/۰۵/۳۰',
+      'shamsi_time': '۲۲:۳۰',
+      'created_at': DateTime.now().toIso8601String(),
+      'user_problem':
+          'کاربر گزارش کرد که وقتی شماره موبایل را به فارسی وارد می‌کند، پیامک ارسال نمی‌شود و خطا دریافت می‌کند.',
+      'solution_description':
+          '''ایجاد کلاس PersianNumberUtils با قابلیت‌های زیر:
+- تبدیل اعداد فارسی و عربی به انگلیسی
+- فرمت‌بندی شماره موبایل ایرانی
+- اعتبارسنجی شماره‌ها
+- حذف کاراکترهای اضافی
+- تبدیل خودکار در SmsService
+- پشتیبانی از تمام فرمت‌های ورودی (با/بدون صفر، کد کشور، فاصله، خط تیره)
+نتیجه: اکنون کاربران می‌توانند از اعداد فارسی استفاده کنند و سیستم خودکار آن‌ها را تبدیل می‌کند.''',
+      'user_comment': 'مشکل کاملاً حل شد! عالی بود.',
+      'tags': 'پیامک، اعداد فارسی، تبدیل، شماره موبایل',
+      'priority': 'high',
+      'category': 'feature',
+      'status': 'completed',
+    });
+
+    // بروزرسانی سیستم مدیریت پیامک
+    await db.insert('update_history', {
+      'title': 'توسعه سیستم مدیریت پیامک کامل',
+      'version': '1.1.0',
+      'shamsi_date': '۱۴۰۴/۰۵/۲۹',
+      'shamsi_time': '۱۵:۰۰',
+      'created_at': DateTime.now()
+          .subtract(const Duration(days: 1))
+          .toIso8601String(),
+      'user_problem':
+          'نیاز به سیستم کاملی برای مدیریت پیامک‌ها، ارسال انبوه، لاگ‌گیری و پشتیبانی از چند سامانه.',
+      'solution_description': '''طراحی و پیاده‌سازی سیستم جامع مدیریت پیامک:
+- جداول sms_providers, sms_configs, sms_logs
+- کلاس SmsService با پشتیبانی از سامانه ۰۰۹۸
+- رابط کاربری SmsPanel با ۴ تب
+- آمار و گزارش‌گیری
+- تست اتصال سامانه‌ها
+- ارسال تکی و انبوه
+- مدیریت تنظیمات سامانه‌ها''',
+      'tags': 'پیامک، SMS، سامانه ۰۰۹۸، مدیریت',
+      'priority': 'high',
+      'category': 'feature',
+      'status': 'completed',
+    });
   }
 
   // متدهای کاربردی
@@ -271,7 +377,10 @@ class DatabaseHelper {
 
   Future<int> update(String table, Map<String, dynamic> data, int id) async {
     final db = await instance.database;
-    data['updated_at'] = DateTime.now().toIso8601String();
+    // فقط برای جداولی که فیلد updated_at دارند این فیلد را اضافه کن
+    if (table != 'sms_logs' && table != 'analytics') {
+      data['updated_at'] = DateTime.now().toIso8601String();
+    }
     return db.update(table, data, where: 'id = ?', whereArgs: [id]);
   }
 
