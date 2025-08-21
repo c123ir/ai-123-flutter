@@ -467,6 +467,15 @@ flutter build linux --release
 - 📦 Create Release: `./scripts/create-release.sh patch`
 - 🔄 Sync Upstream: `./scripts/sync-upstream.sh`
 
+### **GitHub Copilot Integration**
+- 🤖 [قوانین توسعه اصلی](../.github/instructions/rols.instructions.md)
+- 📋 [راهنمای مدل‌ها](../.github/instructions/models.instructions.md)
+- ⚙️ [راهنمای سرویس‌ها](../.github/instructions/services.instructions.md)
+- 🎨 [راهنمای ویجت‌ها](../.github/instructions/widgets.instructions.md)
+- 🗄️ [راهنمای دیتابیس](../.github/instructions/database.instructions.md)
+- 🎯 [پرامپت اصلی](../.github/prompts/prompt01.prompt.md)
+- 🧪 [راهنمای تست](../.github/prompts/testing.prompt.md)
+
 ---
 
 ## 📝 لایسنس
