@@ -155,14 +155,32 @@ class _SmsPanelState extends State<SmsPanel> with TickerProviderStateMixin {
           ),
           const SizedBox(height: 16),
 
-          // دکمه ارسال
-          ElevatedButton.icon(
-            onPressed: _sendSingleSms,
-            icon: const Icon(Icons.send),
-            label: const Text(
-              'ارسال پیامک',
-              style: TextStyle(fontFamily: 'Vazirmatn'),
-            ),
+          // دکمه‌های ارسال و تست
+          Row(
+            children: [
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: _sendSingleSms,
+                  icon: const Icon(Icons.send),
+                  label: const Text(
+                    'ارسال پیامک',
+                    style: TextStyle(fontFamily: 'Vazirmatn'),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              ElevatedButton.icon(
+                onPressed: _selectedProvider != null
+                    ? () => _testProvider()
+                    : null,
+                icon: const Icon(Icons.science),
+                label: const Text(
+                  'تست سامانه',
+                  style: TextStyle(fontFamily: 'Vazirmatn'),
+                ),
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.orange),
+              ),
+            ],
           ),
         ],
       ),
@@ -290,6 +308,46 @@ class _SmsPanelState extends State<SmsPanel> with TickerProviderStateMixin {
                           fontFamily: 'Vazirmatn',
                         ),
                       ),
+                      // نمایش کد خطا و دلیل در صورت عدم موفقیت
+                      if (sms.isFailed &&
+                          (sms.responseCode != null ||
+                              sms.responseMessage != null))
+                        Container(
+                          margin: const EdgeInsets.only(top: 4),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.red.shade50,
+                            borderRadius: BorderRadius.circular(4),
+                            border: Border.all(color: Colors.red.shade200),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              if (sms.responseCode != null)
+                                Text(
+                                  'کد خطا: ${sms.responseCode}',
+                                  style: const TextStyle(
+                                    fontSize: 11,
+                                    fontFamily: 'Vazirmatn',
+                                    color: Colors.red,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              if (sms.responseMessage != null)
+                                Text(
+                                  'دلیل: ${sms.responseMessage}',
+                                  style: const TextStyle(
+                                    fontSize: 11,
+                                    fontFamily: 'Vazirmatn',
+                                    color: Colors.red,
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
                     ],
                   ),
                   trailing: Text(
@@ -386,7 +444,7 @@ class _SmsPanelState extends State<SmsPanel> with TickerProviderStateMixin {
                     style: const TextStyle(fontFamily: 'Vazirmatn'),
                   ),
                   trailing: ElevatedButton(
-                    onPressed: () => _testProvider(provider),
+                    onPressed: () => _testSpecificProvider(provider),
                     child: const Text(
                       'تست',
                       style: TextStyle(fontFamily: 'Vazirmatn'),
@@ -513,15 +571,52 @@ class _SmsPanelState extends State<SmsPanel> with TickerProviderStateMixin {
     setState(() => _isLoading = false);
   }
 
-  Future<void> _testProvider(SmsProvider provider) async {
+  Future<void> _testProvider() async {
+    if (_selectedProvider == null) return;
+
     setState(() => _isLoading = true);
 
     try {
-      final success = await _smsService.testProvider(provider.id!);
-      if (success) {
+      final result = await _smsService.testProviderDetailed(
+        _selectedProvider!.id!,
+      );
+
+      if (result['success'] == true) {
+        _showSuccess('تست سامانه ${_selectedProvider!.name} موفق بود');
+      } else {
+        final error = result['error'] ?? 'خطای نامشخص';
+        final configs = result['configs'];
+        String debugInfo = 'خطا: $error';
+        if (configs != null) {
+          debugInfo += '\nتنظیمات موجود: ${configs.keys.join(', ')}';
+        }
+        _showError(
+          'تست سامانه ${_selectedProvider!.name} ناموفق بود\n$debugInfo',
+        );
+      }
+    } catch (e) {
+      _showError('خطا در تست سامانه: $e');
+    }
+
+    setState(() => _isLoading = false);
+  }
+
+  Future<void> _testSpecificProvider(SmsProvider provider) async {
+    setState(() => _isLoading = true);
+
+    try {
+      final result = await _smsService.testProviderDetailed(provider.id!);
+
+      if (result['success'] == true) {
         _showSuccess('تست سامانه ${provider.name} موفق بود');
       } else {
-        _showError('تست سامانه ${provider.name} ناموفق بود');
+        final error = result['error'] ?? 'خطای نامشخص';
+        final configs = result['configs'];
+        String debugInfo = 'خطا: $error';
+        if (configs != null) {
+          debugInfo += '\nتنظیمات موجود: ${configs.keys.join(', ')}';
+        }
+        _showError('تست سامانه ${provider.name} ناموفق بود\n$debugInfo');
       }
     } catch (e) {
       _showError('خطا در تست سامانه: $e');

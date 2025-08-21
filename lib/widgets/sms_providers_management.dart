@@ -1,0 +1,738 @@
+// lib/widgets/sms_providers_management.dart
+// مدیریت سامانه‌های پیامکی - اضافه، ویرایش و حذف سامانه‌ها
+
+import 'package:flutter/material.dart';
+import '../database/database_helper.dart';
+import '../models/sms_provider.dart';
+import '../models/sms_config.dart';
+
+class SmsProvidersManagement extends StatefulWidget {
+  const SmsProvidersManagement({super.key});
+
+  @override
+  State<SmsProvidersManagement> createState() => _SmsProvidersManagementState();
+}
+
+class _SmsProvidersManagementState extends State<SmsProvidersManagement> {
+  final DatabaseHelper _db = DatabaseHelper.instance;
+  List<SmsProvider> _providers = [];
+  bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProviders();
+  }
+
+  Future<void> _loadProviders() async {
+    setState(() => _isLoading = true);
+
+    try {
+      final data = await _db.queryAll('sms_providers');
+      setState(() {
+        _providers = data.map((row) => SmsProvider.fromMap(row)).toList();
+      });
+    } catch (e) {
+      _showError('خطا در بارگذاری سامانه‌ها: $e');
+    }
+
+    setState(() => _isLoading = false);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Directionality(
+      textDirection: TextDirection.rtl,
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text(
+            'مدیریت سامانه‌های پیامکی',
+            style: TextStyle(fontFamily: 'Vazirmatn'),
+          ),
+          backgroundColor: const Color(0xFF667eea),
+          foregroundColor: Colors.white,
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.add),
+              onPressed: _showAddProviderDialog,
+            ),
+            IconButton(
+              icon: const Icon(Icons.refresh),
+              onPressed: _loadProviders,
+            ),
+          ],
+        ),
+        body: _isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : _buildProvidersList(),
+      ),
+    );
+  }
+
+  Widget _buildProvidersList() {
+    if (_providers.isEmpty) {
+      return const Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.sms_outlined, size: 64, color: Colors.grey),
+            SizedBox(height: 16),
+            Text(
+              'هیچ سامانه‌ای تعریف نشده است',
+              style: TextStyle(
+                fontSize: 18,
+                color: Colors.grey,
+                fontFamily: 'Vazirmatn',
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return ListView.builder(
+      padding: const EdgeInsets.all(16),
+      itemCount: _providers.length,
+      itemBuilder: (context, index) {
+        final provider = _providers[index];
+        return Card(
+          margin: const EdgeInsets.only(bottom: 12),
+          child: ListTile(
+            leading: CircleAvatar(
+              backgroundColor: provider.isActive ? Colors.green : Colors.red,
+              child: Icon(
+                provider.isActive ? Icons.check : Icons.close,
+                color: Colors.white,
+              ),
+            ),
+            title: Text(
+              provider.name,
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                fontFamily: 'Vazirmatn',
+              ),
+            ),
+            subtitle: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'نوع: ${provider.providerType}',
+                  style: const TextStyle(fontFamily: 'Vazirmatn'),
+                ),
+                Text(
+                  'اولویت: ${provider.priority}',
+                  style: const TextStyle(fontFamily: 'Vazirmatn'),
+                ),
+                if (provider.description != null)
+                  Text(
+                    provider.description!,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey,
+                      fontFamily: 'Vazirmatn',
+                    ),
+                  ),
+              ],
+            ),
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.settings),
+                  onPressed: () => _showConfigDialog(provider),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.edit),
+                  onPressed: () => _showEditProviderDialog(provider),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.delete, color: Colors.red),
+                  onPressed: () => _confirmDelete(provider),
+                ),
+              ],
+            ),
+            onTap: () => _toggleProviderStatus(provider),
+          ),
+        );
+      },
+    );
+  }
+
+  void _showAddProviderDialog() {
+    showDialog(context: context, builder: (context) => _ProviderDialog()).then((
+      result,
+    ) {
+      if (result == true) {
+        _loadProviders();
+      }
+    });
+  }
+
+  void _showEditProviderDialog(SmsProvider provider) {
+    showDialog(
+      context: context,
+      builder: (context) => _ProviderDialog(provider: provider),
+    ).then((result) {
+      if (result == true) {
+        _loadProviders();
+      }
+    });
+  }
+
+  void _showConfigDialog(SmsProvider provider) {
+    showDialog(
+      context: context,
+      builder: (context) => _ConfigDialog(provider: provider),
+    );
+  }
+
+  Future<void> _toggleProviderStatus(SmsProvider provider) async {
+    try {
+      await _db.update('sms_providers', {
+        'is_active': provider.isActive ? 0 : 1,
+      }, provider.id!);
+
+      _showSuccess(provider.isActive ? 'سامانه غیرفعال شد' : 'سامانه فعال شد');
+      _loadProviders();
+    } catch (e) {
+      _showError('خطا در تغییر وضعیت: $e');
+    }
+  }
+
+  void _confirmDelete(SmsProvider provider) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text(
+          'تأیید حذف',
+          style: TextStyle(fontFamily: 'Vazirmatn'),
+        ),
+        content: Text(
+          'آیا مطمئن هستید که می‌خواهید سامانه "${provider.name}" را حذف کنید؟',
+          style: const TextStyle(fontFamily: 'Vazirmatn'),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text(
+              'انصراف',
+              style: TextStyle(fontFamily: 'Vazirmatn'),
+            ),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _deleteProvider(provider);
+            },
+            child: const Text(
+              'حذف',
+              style: TextStyle(color: Colors.red, fontFamily: 'Vazirmatn'),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _deleteProvider(SmsProvider provider) async {
+    try {
+      // حذف تنظیمات سامانه
+      final db = await _db.database;
+      await db.delete(
+        'sms_configs',
+        where: 'provider_id = ?',
+        whereArgs: [provider.id],
+      );
+
+      // حذف سامانه
+      await _db.delete('sms_providers', provider.id!);
+
+      _showSuccess('سامانه با موفقیت حذف شد');
+      _loadProviders();
+    } catch (e) {
+      _showError('خطا در حذف سامانه: $e');
+    }
+  }
+
+  void _showError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message, style: const TextStyle(fontFamily: 'Vazirmatn')),
+        backgroundColor: Colors.red,
+      ),
+    );
+  }
+
+  void _showSuccess(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message, style: const TextStyle(fontFamily: 'Vazirmatn')),
+        backgroundColor: Colors.green,
+      ),
+    );
+  }
+}
+
+class _ProviderDialog extends StatefulWidget {
+  final SmsProvider? provider;
+
+  const _ProviderDialog({this.provider});
+
+  @override
+  State<_ProviderDialog> createState() => _ProviderDialogState();
+}
+
+class _ProviderDialogState extends State<_ProviderDialog> {
+  final _formKey = GlobalKey<FormState>();
+  final _nameController = TextEditingController();
+  final _typeController = TextEditingController();
+  final _descriptionController = TextEditingController();
+  final _priorityController = TextEditingController();
+  bool _isActive = true;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.provider != null) {
+      _nameController.text = widget.provider!.name;
+      _typeController.text = widget.provider!.providerType;
+      _descriptionController.text = widget.provider!.description ?? '';
+      _priorityController.text = widget.provider!.priority.toString();
+      _isActive = widget.provider!.isActive;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Directionality(
+      textDirection: TextDirection.rtl,
+      child: AlertDialog(
+        title: Text(
+          widget.provider == null ? 'افزودن سامانه جدید' : 'ویرایش سامانه',
+          style: const TextStyle(fontFamily: 'Vazirmatn'),
+        ),
+        content: Form(
+          key: _formKey,
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextFormField(
+                  controller: _nameController,
+                  decoration: const InputDecoration(
+                    labelText: 'نام سامانه',
+                    border: OutlineInputBorder(),
+                  ),
+                  validator: (value) {
+                    if (value?.isEmpty ?? true) {
+                      return 'نام سامانه الزامی است';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: _typeController,
+                  decoration: const InputDecoration(
+                    labelText: 'نوع سامانه',
+                    hintText: 'مثال: 0098sms, kavenegar, etc.',
+                    border: OutlineInputBorder(),
+                  ),
+                  validator: (value) {
+                    if (value?.isEmpty ?? true) {
+                      return 'نوع سامانه الزامی است';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: _descriptionController,
+                  decoration: const InputDecoration(
+                    labelText: 'توضیحات',
+                    border: OutlineInputBorder(),
+                  ),
+                  maxLines: 3,
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: _priorityController,
+                  decoration: const InputDecoration(
+                    labelText: 'اولویت',
+                    hintText: 'عدد (بالاتر = اولویت بیشتر)',
+                    border: OutlineInputBorder(),
+                  ),
+                  keyboardType: TextInputType.number,
+                  validator: (value) {
+                    if (value?.isEmpty ?? true) {
+                      return 'اولویت الزامی است';
+                    }
+                    if (int.tryParse(value!) == null) {
+                      return 'اولویت باید عدد باشد';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 16),
+                SwitchListTile(
+                  title: const Text(
+                    'فعال',
+                    style: TextStyle(fontFamily: 'Vazirmatn'),
+                  ),
+                  value: _isActive,
+                  onChanged: (value) {
+                    setState(() => _isActive = value);
+                  },
+                ),
+              ],
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text(
+              'انصراف',
+              style: TextStyle(fontFamily: 'Vazirmatn'),
+            ),
+          ),
+          TextButton(
+            onPressed: _saveProvider,
+            child: const Text(
+              'ذخیره',
+              style: TextStyle(fontFamily: 'Vazirmatn'),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _saveProvider() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    try {
+      final db = DatabaseHelper.instance;
+      final data = {
+        'name': _nameController.text,
+        'provider_type': _typeController.text,
+        'description': _descriptionController.text.isEmpty
+            ? null
+            : _descriptionController.text,
+        'is_active': _isActive ? 1 : 0,
+        'priority': int.parse(_priorityController.text),
+      };
+
+      if (widget.provider == null) {
+        // افزودن سامانه جدید
+        await db.insert('sms_providers', data);
+      } else {
+        // ویرایش سامانه موجود
+        await db.update('sms_providers', data, widget.provider!.id!);
+      }
+
+      if (!mounted) return;
+      Navigator.pop(context, true);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'خطا در ذخیره: $e',
+            style: const TextStyle(fontFamily: 'Vazirmatn'),
+          ),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _typeController.dispose();
+    _descriptionController.dispose();
+    _priorityController.dispose();
+    super.dispose();
+  }
+}
+
+class _ConfigDialog extends StatefulWidget {
+  final SmsProvider provider;
+
+  const _ConfigDialog({required this.provider});
+
+  @override
+  State<_ConfigDialog> createState() => _ConfigDialogState();
+}
+
+class _ConfigDialogState extends State<_ConfigDialog> {
+  final DatabaseHelper _db = DatabaseHelper.instance;
+  List<SmsConfig> _configs = [];
+  bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadConfigs();
+  }
+
+  Future<void> _loadConfigs() async {
+    setState(() => _isLoading = true);
+
+    try {
+      final db = await _db.database;
+      final result = await db.query(
+        'sms_configs',
+        where: 'provider_id = ?',
+        whereArgs: [widget.provider.id],
+      );
+
+      setState(() {
+        _configs = result.map((row) => SmsConfig.fromMap(row)).toList();
+      });
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'خطا در بارگذاری تنظیمات: $e',
+            style: const TextStyle(fontFamily: 'Vazirmatn'),
+          ),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+
+    setState(() => _isLoading = false);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Directionality(
+      textDirection: TextDirection.rtl,
+      child: AlertDialog(
+        title: Text(
+          'تنظیمات ${widget.provider.name}',
+          style: const TextStyle(fontFamily: 'Vazirmatn'),
+        ),
+        content: SizedBox(
+          width: 400,
+          height: 300,
+          child: _isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : Column(
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            'تنظیمات سامانه',
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              fontFamily: 'Vazirmatn',
+                            ),
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.add),
+                          onPressed: _showAddConfigDialog,
+                        ),
+                      ],
+                    ),
+                    const Divider(),
+                    Expanded(
+                      child: ListView.builder(
+                        itemCount: _configs.length,
+                        itemBuilder: (context, index) {
+                          final config = _configs[index];
+                          return ListTile(
+                            title: Text(
+                              config.configKey,
+                              style: const TextStyle(fontFamily: 'Vazirmatn'),
+                            ),
+                            subtitle: Text(
+                              config.isEncrypted
+                                  ? '••••••••'
+                                  : config.configValue,
+                              style: const TextStyle(fontFamily: 'Vazirmatn'),
+                            ),
+                            trailing: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                if (config.isEncrypted)
+                                  const Icon(Icons.lock, size: 16),
+                                IconButton(
+                                  icon: const Icon(Icons.edit, size: 16),
+                                  onPressed: () =>
+                                      _showEditConfigDialog(config),
+                                ),
+                                IconButton(
+                                  icon: const Icon(
+                                    Icons.delete,
+                                    size: 16,
+                                    color: Colors.red,
+                                  ),
+                                  onPressed: () => _deleteConfig(config),
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text(
+              'بستن',
+              style: TextStyle(fontFamily: 'Vazirmatn'),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showAddConfigDialog() {
+    _showConfigEditDialog(null);
+  }
+
+  void _showEditConfigDialog(SmsConfig config) {
+    _showConfigEditDialog(config);
+  }
+
+  void _showConfigEditDialog(SmsConfig? config) {
+    final keyController = TextEditingController(text: config?.configKey ?? '');
+    final valueController = TextEditingController(
+      text: config?.configValue ?? '',
+    );
+    bool isEncrypted = config?.isEncrypted ?? false;
+
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) => Directionality(
+          textDirection: TextDirection.rtl,
+          child: AlertDialog(
+            title: Text(
+              config == null ? 'افزودن تنظیم جدید' : 'ویرایش تنظیم',
+              style: const TextStyle(fontFamily: 'Vazirmatn'),
+            ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: keyController,
+                  decoration: const InputDecoration(
+                    labelText: 'کلید تنظیم',
+                    hintText: 'username, password, api_url, ...',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: valueController,
+                  decoration: const InputDecoration(
+                    labelText: 'مقدار',
+                    border: OutlineInputBorder(),
+                  ),
+                  obscureText: isEncrypted,
+                ),
+                const SizedBox(height: 16),
+                SwitchListTile(
+                  title: const Text(
+                    'رمزگذاری شود',
+                    style: TextStyle(fontFamily: 'Vazirmatn'),
+                  ),
+                  subtitle: const Text(
+                    'برای رمز عبور و اطلاعات حساس',
+                    style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12),
+                  ),
+                  value: isEncrypted,
+                  onChanged: (value) {
+                    setState(() => isEncrypted = value);
+                  },
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text(
+                  'انصراف',
+                  style: TextStyle(fontFamily: 'Vazirmatn'),
+                ),
+              ),
+              TextButton(
+                onPressed: () async {
+                  if (keyController.text.isEmpty ||
+                      valueController.text.isEmpty) {
+                    return;
+                  }
+
+                  final navigator = Navigator.of(context);
+                  final scaffoldMessenger = ScaffoldMessenger.of(context);
+
+                  try {
+                    final data = {
+                      'provider_id': widget.provider.id,
+                      'config_key': keyController.text,
+                      'config_value': valueController.text,
+                      'is_encrypted': isEncrypted ? 1 : 0,
+                    };
+
+                    if (config == null) {
+                      await _db.insert('sms_configs', data);
+                    } else {
+                      await _db.update('sms_configs', data, config.id!);
+                    }
+
+                    navigator.pop();
+                    if (mounted) _loadConfigs();
+                  } catch (e) {
+                    scaffoldMessenger.showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          'خطا در ذخیره: $e',
+                          style: const TextStyle(fontFamily: 'Vazirmatn'),
+                        ),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                  }
+                },
+                child: const Text(
+                  'ذخیره',
+                  style: TextStyle(fontFamily: 'Vazirmatn'),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _deleteConfig(SmsConfig config) async {
+    try {
+      await _db.delete('sms_configs', config.id!);
+      _loadConfigs();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'خطا در حذف: $e',
+            style: const TextStyle(fontFamily: 'Vazirmatn'),
+          ),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+}

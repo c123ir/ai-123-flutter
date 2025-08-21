@@ -45,6 +45,11 @@ const List<SidebarMenuItem> adminMenuItems = [
     gradient: LinearGradient(colors: [Color(0xFFee9ca7), Color(0xFFffdde1)]),
   ),
   SidebarMenuItem(
+    icon: Icons.sms_rounded,
+    title: 'مدیریت پیامک',
+    gradient: LinearGradient(colors: [Color(0xFF667eea), Color(0xFF764ba2)]),
+  ),
+  SidebarMenuItem(
     icon: Icons.badge_rounded,
     title: 'مدیریت پرسنل',
     gradient: LinearGradient(colors: [Color(0xFFc471ed), Color(0xFFf64f59)]),
@@ -68,6 +73,11 @@ const List<SidebarMenuItem> adminMenuItems = [
     icon: Icons.settings_rounded,
     title: 'تنظیمات',
     gradient: LinearGradient(colors: [Color(0xFF74b9ff), Color(0xFF0984e3)]),
+  ),
+  SidebarMenuItem(
+    icon: Icons.history_rounded,
+    title: 'تاریخچه بروزرسانی',
+    gradient: LinearGradient(colors: [Color(0xFF9c88ff), Color(0xFF8c7ae6)]),
   ),
 ];
 
