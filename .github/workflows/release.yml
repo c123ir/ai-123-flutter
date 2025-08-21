@@ -3,150 +3,150 @@ name: Release Management
 on:
   push:
     tags:
-      - 'v*.*.*'
+      - "v*.*.*"
 
 jobs:
   create-release:
     name: Create Release
     runs-on: ubuntu-latest
-    
+
     outputs:
       upload_url: ${{ steps.create_release.outputs.upload_url }}
       release_id: ${{ steps.create_release.outputs.id }}
-    
+
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-    
-    - name: Get version from tag
-      id: get_version
-      run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
-    
-    - name: Create Release
-      id: create_release
-      uses: softprops/action-gh-release@v1
-      with:
-        tag_name: ${{ steps.get_version.outputs.VERSION }}
-        name: Smart Assistant 123 ${{ steps.get_version.outputs.VERSION }}
-        body: |
-          ## 🚀 Smart Assistant 123 - نسخه ${{ steps.get_version.outputs.VERSION }}
-          
-          ### ✨ ویژگی‌های جدید
-          - بهبود رابط کاربری
-          - افزایش سرعت عملکرد
-          - پشتیبانی از ویژگی‌های جدید
-          
-          ### 🐛 رفع مشکلات
-          - رفع باگ‌های شناخته شده
-          - بهبود پایداری
-          
-          ### 📱 فایل‌های دانلود
-          - **APK Android**: برای نصب روی دستگاه‌های اندروید
-          - **Web Version**: نسخه وب در GitHub Pages
-          
-          ### 📋 تغییرات کامل
-          برای مشاهده تغییرات کامل، [کلیک کنید](https://github.com/c123ir/ai-123-flutter/compare/${{ github.event.before }}...${{ github.sha }})
-        draft: false
-        prerelease: false
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Get version from tag
+        id: get_version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+
+      - name: Create Release
+        id: create_release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ steps.get_version.outputs.VERSION }}
+          name: Smart Assistant 123 ${{ steps.get_version.outputs.VERSION }}
+          body: |
+            ## 🚀 Smart Assistant 123 - نسخه ${{ steps.get_version.outputs.VERSION }}
+
+            ### ✨ ویژگی‌های جدید
+            - بهبود رابط کاربری
+            - افزایش سرعت عملکرد
+            - پشتیبانی از ویژگی‌های جدید
+
+            ### 🐛 رفع مشکلات
+            - رفع باگ‌های شناخته شده
+            - بهبود پایداری
+
+            ### 📱 فایل‌های دانلود
+            - **APK Android**: برای نصب روی دستگاه‌های اندروید
+            - **Web Version**: نسخه وب در GitHub Pages
+
+            ### 📋 تغییرات کامل
+            برای مشاهده تغییرات کامل، [کلیک کنید](https://github.com/c123ir/ai-123-flutter/compare/${{ github.event.before }}...${{ github.sha }})
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   build-android:
     name: Build Android APK
     needs: create-release
     runs-on: ubuntu-latest
-    
+
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-    
-    - name: Setup Flutter
-      uses: subosito/flutter-action@v2
-      with:
-        flutter-version: '3.8.1'
-        channel: 'stable'
-        cache: true
-    
-    - name: Install dependencies
-      run: flutter pub get
-    
-    - name: Build APK
-      run: flutter build apk --release --build-name=${{ github.ref_name }} --build-number=${{ github.run_number }}
-    
-    - name: Sign APK (if keystore available)
-      if: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' }}
-      run: |
-        echo "🔐 Signing APK with release keystore"
-        # Add signing logic here if needed
-    
-    - name: Rename APK
-      run: |
-        mv build/app/outputs/flutter-apk/app-release.apk \
-           build/app/outputs/flutter-apk/smart-assistant-123-${{ github.ref_name }}.apk
-    
-    - name: Upload APK to Release
-      uses: softprops/action-gh-release@v1
-      with:
-        files: build/app/outputs/flutter-apk/smart-assistant-123-${{ github.ref_name }}.apk
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.8.1"
+          channel: "stable"
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Build APK
+        run: flutter build apk --release --build-name=${{ github.ref_name }} --build-number=${{ github.run_number }}
+
+      - name: Sign APK (if keystore available)
+        if: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' }}
+        run: |
+          echo "🔐 Signing APK with release keystore"
+          # Add signing logic here if needed
+
+      - name: Rename APK
+        run: |
+          mv build/app/outputs/flutter-apk/app-release.apk \
+             build/app/outputs/flutter-apk/smart-assistant-123-${{ github.ref_name }}.apk
+
+      - name: Upload APK to Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: build/app/outputs/flutter-apk/smart-assistant-123-${{ github.ref_name }}.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   build-web:
     name: Build and Deploy Web
     needs: create-release
     runs-on: ubuntu-latest
-    
+
     permissions:
       contents: read
       pages: write
       id-token: write
-    
+
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-    
-    - name: Setup Flutter
-      uses: subosito/flutter-action@v2
-      with:
-        flutter-version: '3.8.1'
-        channel: 'stable'
-        cache: true
-    
-    - name: Install dependencies
-      run: flutter pub get
-    
-    - name: Build Web
-      run: flutter build web --release --base-href "/ai-123-flutter/"
-    
-    - name: Create web archive
-      run: |
-        cd build/web
-        tar -czf ../../smart-assistant-123-web-${{ github.ref_name }}.tar.gz .
-        cd ../..
-    
-    - name: Upload Web Archive to Release
-      uses: softprops/action-gh-release@v1
-      with:
-        files: smart-assistant-123-web-${{ github.ref_name }}.tar.gz
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.8.1"
+          channel: "stable"
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Build Web
+        run: flutter build web --release --base-href "/ai-123-flutter/"
+
+      - name: Create web archive
+        run: |
+          cd build/web
+          tar -czf ../../smart-assistant-123-web-${{ github.ref_name }}.tar.gz .
+          cd ../..
+
+      - name: Upload Web Archive to Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: smart-assistant-123-web-${{ github.ref_name }}.tar.gz
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   notify:
     name: Send Notifications
     needs: [create-release, build-android, build-web]
     runs-on: ubuntu-latest
     if: always()
-    
+
     steps:
-    - name: Send Success Notification
-      if: ${{ needs.create-release.result == 'success' && needs.build-android.result == 'success' && needs.build-web.result == 'success' }}
-      run: |
-        echo "✅ Release ${{ github.ref_name }} has been successfully created!"
-        echo "📦 APK and Web builds are available for download"
-        echo "🌐 Web version deployed to GitHub Pages"
-    
-    - name: Send Failure Notification
-      if: ${{ needs.create-release.result == 'failure' || needs.build-android.result == 'failure' || needs.build-web.result == 'failure' }}
-      run: |
-        echo "❌ Release ${{ github.ref_name }} failed!"
-        echo "Please check the workflow logs for details"
+      - name: Send Success Notification
+        if: ${{ needs.create-release.result == 'success' && needs.build-android.result == 'success' && needs.build-web.result == 'success' }}
+        run: |
+          echo "✅ Release ${{ github.ref_name }} has been successfully created!"
+          echo "📦 APK and Web builds are available for download"
+          echo "🌐 Web version deployed to GitHub Pages"
+
+      - name: Send Failure Notification
+        if: ${{ needs.create-release.result == 'failure' || needs.build-android.result == 'failure' || needs.build-web.result == 'failure' }}
+        run: |
+          echo "❌ Release ${{ github.ref_name }} failed!"
+          echo "Please check the workflow logs for details"

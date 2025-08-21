@@ -2,130 +2,130 @@ name: Flutter CI/CD Pipeline
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [main, develop]
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
   test:
     name: Test & Build
     runs-on: ubuntu-latest
-    
+
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-    
-    - name: Setup Flutter
-      uses: subosito/flutter-action@v2
-      with:
-        flutter-version: '3.8.1'
-        channel: 'stable'
-        cache: true
-    
-    - name: Install dependencies
-      run: flutter pub get
-    
-    - name: Verify formatting
-      run: dart format --output=none --set-exit-if-changed .
-    
-    - name: Analyze project source
-      run: flutter analyze --fatal-infos
-    
-    - name: Run tests
-      run: flutter test --coverage
-    
-    - name: Upload coverage reports
-      uses: codecov/codecov-action@v3
-      with:
-        file: coverage/lcov.info
-        name: codecov-umbrella
-        fail_ci_if_error: false
-    
-    - name: Build APK (Android)
-      run: flutter build apk --release
-    
-    - name: Build Web
-      run: flutter build web --release
-    
-    - name: Upload build artifacts
-      uses: actions/upload-artifact@v3
-      with:
-        name: flutter-builds
-        path: |
-          build/app/outputs/flutter-apk/
-          build/web/
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.8.1"
+          channel: "stable"
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Verify formatting
+        run: dart format --output=none --set-exit-if-changed .
+
+      - name: Analyze project source
+        run: flutter analyze --fatal-infos
+
+      - name: Run tests
+        run: flutter test --coverage
+
+      - name: Upload coverage reports
+        uses: codecov/codecov-action@v3
+        with:
+          file: coverage/lcov.info
+          name: codecov-umbrella
+          fail_ci_if_error: false
+
+      - name: Build APK (Android)
+        run: flutter build apk --release
+
+      - name: Build Web
+        run: flutter build web --release
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: flutter-builds
+          path: |
+            build/app/outputs/flutter-apk/
+            build/web/
 
   deploy-web:
     name: Deploy to GitHub Pages
     needs: test
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-    
+
     permissions:
       contents: read
       pages: write
       id-token: write
-    
+
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-    
+
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-    
-    - name: Setup Flutter
-      uses: subosito/flutter-action@v2
-      with:
-        flutter-version: '3.8.1'
-        channel: 'stable'
-        cache: true
-    
-    - name: Install dependencies
-      run: flutter pub get
-    
-    - name: Build Web
-      run: flutter build web --release --base-href "/ai-123-flutter/"
-    
-    - name: Setup Pages
-      uses: actions/configure-pages@v3
-    
-    - name: Upload to GitHub Pages
-      uses: actions/upload-pages-artifact@v2
-      with:
-        path: build/web
-    
-    - name: Deploy to GitHub Pages
-      id: deployment
-      uses: actions/deploy-pages@v2
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.8.1"
+          channel: "stable"
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Build Web
+        run: flutter build web --release --base-href "/ai-123-flutter/"
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v3
+
+      - name: Upload to GitHub Pages
+        uses: actions/upload-pages-artifact@v2
+        with:
+          path: build/web
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v2
 
   code-quality:
     name: Code Quality Check
     runs-on: ubuntu-latest
-    
+
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-    
-    - name: Setup Flutter
-      uses: subosito/flutter-action@v2
-      with:
-        flutter-version: '3.8.1'
-        channel: 'stable'
-    
-    - name: Install dependencies
-      run: flutter pub get
-    
-    - name: Run dart analyze
-      run: flutter analyze --write=analyze_report.txt
-    
-    - name: Check for TODO comments
-      run: |
-        if grep -r "TODO\|FIXME\|HACK" lib/ --exclude-dir=.git; then
-          echo "⚠️  Found TODO/FIXME/HACK comments in code"
-        else
-          echo "✅ No TODO/FIXME/HACK comments found"
-        fi
-    
-    - name: Check dependencies
-      run: flutter pub deps | grep "✗" || echo "✅ All dependencies are up to date"
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.8.1"
+          channel: "stable"
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Run dart analyze
+        run: flutter analyze --write=analyze_report.txt
+
+      - name: Check for TODO comments
+        run: |
+          if grep -r "TODO\|FIXME\|HACK" lib/ --exclude-dir=.git; then
+            echo "⚠️  Found TODO/FIXME/HACK comments in code"
+          else
+            echo "✅ No TODO/FIXME/HACK comments found"
+          fi
+
+      - name: Check dependencies
+        run: flutter pub deps | grep "✗" || echo "✅ All dependencies are up to date"

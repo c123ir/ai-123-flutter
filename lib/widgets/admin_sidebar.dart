@@ -101,7 +101,7 @@ class _AdminSidebarState extends State<AdminSidebar> {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF667eea).withOpacity(0.3),
+            color: const Color(0xFF667eea).withValues(alpha: 0.3),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
@@ -110,7 +110,7 @@ class _AdminSidebarState extends State<AdminSidebar> {
       child: ClipRRect(
         borderRadius: BorderRadius.circular(20),
         child: Container(
-          decoration: BoxDecoration(color: Colors.black.withOpacity(0.1)),
+          decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.1)),
           child: Column(
             children: [
               // Header
@@ -128,7 +128,7 @@ class _AdminSidebarState extends State<AdminSidebar> {
                         ),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.yellow.withOpacity(0.4),
+                            color: Colors.yellow.withValues(alpha: 0.4),
                             blurRadius: 20,
                             offset: const Offset(0, 5),
                           ),
@@ -172,9 +172,11 @@ class _AdminSidebarState extends State<AdminSidebar> {
                 child: Container(
                   padding: const EdgeInsets.all(15),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.15),
+                    color: Colors.white.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(15),
-                    border: Border.all(color: Colors.white.withOpacity(0.3)),
+                    border: Border.all(
+                      color: Colors.white.withValues(alpha: 0.3),
+                    ),
                   ),
                   child: const Row(
                     children: [
@@ -242,8 +244,8 @@ class _AdminSidebarState extends State<AdminSidebar> {
               gradient: isSelected
                   ? LinearGradient(
                       colors: [
-                        Colors.white.withOpacity(0.2),
-                        Colors.white.withOpacity(0.1),
+                        Colors.white.withValues(alpha: 0.2),
+                        Colors.white.withValues(alpha: 0.1),
                       ],
                     )
                   : null,
@@ -251,14 +253,14 @@ class _AdminSidebarState extends State<AdminSidebar> {
               borderRadius: BorderRadius.circular(18),
               border: Border.all(
                 color: isSelected
-                    ? Colors.white.withOpacity(0.4)
+                    ? Colors.white.withValues(alpha: 0.4)
                     : Colors.transparent,
                 width: 1,
               ),
               boxShadow: isSelected
                   ? [
                       BoxShadow(
-                        color: Colors.white.withOpacity(0.2),
+                        color: Colors.white.withValues(alpha: 0.2),
                         blurRadius: 15,
                         offset: const Offset(0, 5),
                       ),
@@ -271,7 +273,9 @@ class _AdminSidebarState extends State<AdminSidebar> {
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
                     gradient: isSelected ? item.gradient : null,
-                    color: isSelected ? null : Colors.white.withOpacity(0.15),
+                    color: isSelected
+                        ? null
+                        : Colors.white.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Icon(item.icon, color: Colors.white, size: 20),

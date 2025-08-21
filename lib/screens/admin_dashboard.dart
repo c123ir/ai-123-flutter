@@ -36,16 +36,18 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               child: Container(
                 margin: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.9),
+                  color: Colors.white.withValues(alpha: 0.9),
                   borderRadius: BorderRadius.circular(16),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
+                      color: Colors.black.withValues(alpha: 0.05),
                       blurRadius: 10,
                       offset: const Offset(0, 2),
                     ),
                   ],
-                  border: Border.all(color: Colors.white.withOpacity(0.8)),
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.8),
+                  ),
                 ),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(16),

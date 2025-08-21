@@ -3,103 +3,103 @@ name: Auto Update Dependencies
 on:
   schedule:
     # هر هفته یکشنبه در ساعت 9 صبح UTC
-    - cron: '0 9 * * 0'
+    - cron: "0 9 * * 0"
   workflow_dispatch:
 
 jobs:
   update-dependencies:
     name: Update Flutter Dependencies
     runs-on: ubuntu-latest
-    
+
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-      with:
-        token: ${{ secrets.GITHUB_TOKEN }}
-    
-    - name: Setup Flutter
-      uses: subosito/flutter-action@v2
-      with:
-        flutter-version: '3.8.1'
-        channel: 'stable'
-        cache: true
-    
-    - name: Check for outdated packages
-      id: check_outdated
-      run: |
-        flutter pub outdated --json > outdated.json
-        if [ $(cat outdated.json | jq '.packages | length') -gt 0 ]; then
-          echo "has_updates=true" >> $GITHUB_OUTPUT
-        else
-          echo "has_updates=false" >> $GITHUB_OUTPUT
-        fi
-    
-    - name: Update dependencies
-      if: steps.check_outdated.outputs.has_updates == 'true'
-      run: |
-        flutter pub upgrade
-        flutter pub get
-    
-    - name: Run tests after update
-      if: steps.check_outdated.outputs.has_updates == 'true'
-      run: |
-        flutter analyze
-        flutter test
-    
-    - name: Create Pull Request
-      if: steps.check_outdated.outputs.has_updates == 'true'
-      uses: peter-evans/create-pull-request@v5
-      with:
-        token: ${{ secrets.GITHUB_TOKEN }}
-        commit-message: 'chore: update Flutter dependencies'
-        title: '🔄 بروزرسانی خودکار وابستگی‌ها'
-        body: |
-          ## 🔄 بروزرسانی خودکار وابستگی‌ها
-          
-          این PR به طور خودکار وابستگی‌های Flutter را بروزرسانی کرده است.
-          
-          ### تغییرات انجام شده:
-          - بروزرسانی packages در pubspec.yaml
-          - اجرای flutter pub upgrade
-          - بررسی تست‌ها و تحلیل کد
-          
-          ### بررسی شده:
-          - ✅ تمام تست‌ها پاس شده‌اند
-          - ✅ تحلیل کد بدون خطا
-          - ✅ پروژه قابل build است
-          
-          لطفاً قبل از merge، یک بار دیگر بررسی کنید.
-        branch: chore/update-dependencies
-        delete-branch: true
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.8.1"
+          channel: "stable"
+          cache: true
+
+      - name: Check for outdated packages
+        id: check_outdated
+        run: |
+          flutter pub outdated --json > outdated.json
+          if [ $(cat outdated.json | jq '.packages | length') -gt 0 ]; then
+            echo "has_updates=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_updates=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Update dependencies
+        if: steps.check_outdated.outputs.has_updates == 'true'
+        run: |
+          flutter pub upgrade
+          flutter pub get
+
+      - name: Run tests after update
+        if: steps.check_outdated.outputs.has_updates == 'true'
+        run: |
+          flutter analyze
+          flutter test
+
+      - name: Create Pull Request
+        if: steps.check_outdated.outputs.has_updates == 'true'
+        uses: peter-evans/create-pull-request@v5
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "chore: update Flutter dependencies"
+          title: "🔄 بروزرسانی خودکار وابستگی‌ها"
+          body: |
+            ## 🔄 بروزرسانی خودکار وابستگی‌ها
+
+            این PR به طور خودکار وابستگی‌های Flutter را بروزرسانی کرده است.
+
+            ### تغییرات انجام شده:
+            - بروزرسانی packages در pubspec.yaml
+            - اجرای flutter pub upgrade
+            - بررسی تست‌ها و تحلیل کد
+
+            ### بررسی شده:
+            - ✅ تمام تست‌ها پاس شده‌اند
+            - ✅ تحلیل کد بدون خطا
+            - ✅ پروژه قابل build است
+
+            لطفاً قبل از merge، یک بار دیگر بررسی کنید.
+          branch: chore/update-dependencies
+          delete-branch: true
 
   security-audit:
     name: Security Audit
     runs-on: ubuntu-latest
-    
+
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-    
-    - name: Setup Flutter
-      uses: subosito/flutter-action@v2
-      with:
-        flutter-version: '3.8.1'
-        channel: 'stable'
-    
-    - name: Install dependencies
-      run: flutter pub get
-    
-    - name: Run security audit
-      run: |
-        echo "🔍 Running security audit..."
-        # بررسی وابستگی‌های امنیتی
-        flutter pub deps | grep -E "(http|crypto|auth)" || echo "No security-related packages found"
-    
-    - name: Check for sensitive files
-      run: |
-        echo "🔒 Checking for sensitive files..."
-        if find . -name "*.key" -o -name "*.keystore" -o -name ".env" | grep -v .git | head -5; then
-          echo "⚠️  Sensitive files found! Please ensure they are in .gitignore"
-        else
-          echo "✅ No sensitive files found in repository"
-        fi
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.8.1"
+          channel: "stable"
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Run security audit
+        run: |
+          echo "🔍 Running security audit..."
+          # بررسی وابستگی‌های امنیتی
+          flutter pub deps | grep -E "(http|crypto|auth)" || echo "No security-related packages found"
+
+      - name: Check for sensitive files
+        run: |
+          echo "🔒 Checking for sensitive files..."
+          if find . -name "*.key" -o -name "*.keystore" -o -name ".env" | grep -v .git | head -5; then
+            echo "⚠️  Sensitive files found! Please ensure they are in .gitignore"
+          else
+            echo "✅ No sensitive files found in repository"
+          fi

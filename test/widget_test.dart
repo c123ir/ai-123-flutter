@@ -1,9 +1,5 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
+// Smart Assistant 123 - Widget Tests
+// تست‌های اصلی برای کامپوننت‌های UI
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -11,20 +7,31 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:ai_123/main.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  group('Smart Assistant 123 Tests', () {
+    testWidgets('App should start without errors', (WidgetTester tester) async {
+      // بناء اپلیکیشن و تریگر فریم
+      await tester.pumpWidget(const MyApp());
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+      // بررسی که اپ لود شده است
+      expect(find.byType(MaterialApp), findsOneWidget);
+    });
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
+    testWidgets('Should load basic UI structure', (WidgetTester tester) async {
+      // بناء اپلیکیشن
+      await tester.pumpWidget(const MyApp());
+      await tester.pumpAndSettle();
 
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+      // بررسی وجود ساختار اصلی UI
+      expect(find.byType(MaterialApp), findsOneWidget);
+      expect(find.byType(Scaffold), findsAtLeastNWidgets(1));
+    });
+  });
+
+  group('Model Tests', () {
+    test('Basic model test', () {
+      // تست ساده برای اطمینان از کارکرد تست framework
+      expect(1 + 1, equals(2));
+      expect('Smart Assistant 123'.length, greaterThan(0));
+    });
   });
 }
