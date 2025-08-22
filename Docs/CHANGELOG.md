@@ -7,32 +7,6 @@
 
 ---
 
-## [1.3.2] - 2025-08-22
-
-### Changed
-- 🧹 **پاکسازی کامل فایل‌های منسوخ:**
-  - حذف ۱۵+ فایل مرتبط با سیستم قدیمی تاریخچه
-  - حذف فایل‌های JSON، test، register قدیمی
-  - حذف فایل‌های backup و موقت
-  - تمیزسازی workspace برای عملکرد بهتر
-
-### Removed
-- ❌ **فایل‌های منسوخ حذف شده:**
-  - `update_history_records.json` از همه مکان‌ها
-  - فایل‌های test قدیمی: `test_update_history_record.dart`, `debug_update_history.dart`
-  - فایل‌های register: `auto_register_update.dart`, `register_all_changes.dart`
-  - فایل‌های simple: `simple_record_update_history.dart`, `json_record_insert.dart`
-  - فایل‌های backup و temp: `check_update_history.dart.backup`, `temp.json`
-  - فایل‌های database قدیمی: `database_insert.dart`, `direct_database_insert.dart`
-
-### Fixed
-- ✅ **بهینه‌سازی سیستم:**
-  - حذف وابستگی‌های غیرضروری
-  - کاهش پیچیدگی پروژه
-  - بهبود سرعت build و اجرا
-
----
-
 ## [1.3.1] - 2025-08-22
 
 ### Added

@@ -1,8 +1,8 @@
 // test_complete_system.dart
 // تست کامل سیستم دستیار هوشمند ۱۲۳
 
-import '../lib/database/database_manager.dart';
-import '../lib/models/update_history.dart';
+import 'lib/database/database_manager.dart';
+import 'lib/models/update_history.dart';
 
 Future<void> main() async {
   print('🚀 تست کامل سیستم دستیار هوشمند ۱۲۳');

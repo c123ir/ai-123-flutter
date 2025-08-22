@@ -3,7 +3,7 @@
 // نمونه کامل از نحوه اجرای سیستم تایید و ثبت خودکار
 
 import 'dart:io';
-import '../lib/services/update_history_service.dart';
+import 'lib/services/update_history_service.dart';
 
 /// نمایش سیستم کامل تایید و ثبت
 void main() async {

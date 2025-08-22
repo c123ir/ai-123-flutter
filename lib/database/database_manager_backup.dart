@@ -1,5 +1,5 @@
 // lib/database/d  static Future<DatabaseAdapter> getAdapter() async {
-    if (_adapter != null) return _adapter!;
+    if (adapter != null) return adapter!;
 
     print('🗄️ [DatabaseManager] ایجاد MySQLAdapter');
 

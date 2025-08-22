@@ -254,7 +254,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             ),
           ],
         ),
-      );
+      )
     }
     // بررسی اگر منو مدیریت پیامک انتخاب شده باشد
     else if (selectedIndex == 6) {
@@ -280,7 +280,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     }
     // سایر منوها
     return Center(
-      child: Column(
+      child = Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(

@@ -1,7 +1,7 @@
 // test_mysql_adapter.dart
 // تست MySqlDatabaseAdapter
 
-import '../lib/database/mysql_database_adapter.dart';
+import 'lib/database/mysql_database_adapter.dart';
 
 Future<void> main() async {
   print('🧪 تست MySqlDatabaseAdapter...');

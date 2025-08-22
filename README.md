@@ -15,7 +15,6 @@
 - 🎨 [راهنمای کامپوننت‌ها](./Docs/ui-components.md)
 - 📱 [مستندات سیستم پیامک](./Docs/SMS_Documentation.md) **جدید**
 - 🔢 [راهنمای سریع تبدیل اعداد فارسی](./Docs/persian_numbers_quick_guide.md) **جدید**
-- ⏰ [سیستم تاریخچه بروزرسانی MySQL](./Docs/mysql-update-history-guide.md) **جدید**
 - 📋 [سوالات متداول](./Docs/faq.md)i-123-flutter/actions/workflows/flutter.yml)
 [![Release](https://github.com/c123ir/ai-123-flutter/actions/workflows/release.yml/badge.svg)](https://github.com/c123ir/ai-123-flutter/actions/workflows/release.yml)
 [![Flutter Version](https://img.shields.io/badge/Flutter-3.8.1-blue.svg)](https://flutter.dev/)
@@ -144,6 +143,10 @@ backend/              # Backend API سرور
 ├── schema.sql        # MySQL Database Schema
 └── package.json      # Node.js Dependencies
 ```
+├── scripts/           # اسکریپت‌های کمکی
+│   ├── auto_register_update.dart  # جدید: ثبت خودکار بروزرسانی
+│   ├── quick-push.sh
+│   └── create-release.sh
 └── main.dart
 
 .github/

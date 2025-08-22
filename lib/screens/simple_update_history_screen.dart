@@ -32,7 +32,7 @@ class _SimpleUpdateHistoryScreenState extends State<SimpleUpdateHistoryScreen> {
   }
 
   Future<void> _loadData() async {
-    print('🔄 شروع بارگذاری داده‌ها... (instance: ${hashCode})');
+    print('🔄 شروع بارگذاری داده‌ها... (instance: $hashCode)');
 
     // حذف delay غیرضروری برای بهبود تجربه کاربری
     // await Future.delayed(const Duration(seconds: 2));
@@ -47,7 +47,7 @@ class _SimpleUpdateHistoryScreenState extends State<SimpleUpdateHistoryScreen> {
       print('❌ Widget unmounted - setState لغو شد');
     }
 
-    print('✅ بارگذاری کامل شد (instance: ${hashCode})');
+    print('✅ بارگذاری کامل شد (instance: $hashCode)');
   }
 
   @override

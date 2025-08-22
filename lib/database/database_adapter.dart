@@ -41,7 +41,7 @@ class WebDatabaseAdapter implements DatabaseAdapter {
   @override
   Future<void> init() async {
     print(
-      '🌐 [Web Database] مقداردهی اولیه Local Storage (instance: ${hashCode})',
+      '🌐 [Web Database] مقداردهی اولیه Local Storage (instance: $hashCode)',
     );
     // مقداردهی اولیه تنظیمات پیش‌فرض
     await _ensureDefaultData();
@@ -144,7 +144,7 @@ class WebDatabaseAdapter implements DatabaseAdapter {
     String? where,
     List<dynamic>? whereArgs,
   }) async {
-    print('🔍 [Web Database] خواندن از $table (instance: ${hashCode})');
+    print('🔍 [Web Database] خواندن از $table (instance: $hashCode)');
 
     // اطمینان از وجود جدول
     _storage[table] ??= [];

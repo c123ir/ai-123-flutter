@@ -1,8 +1,8 @@
 // test_web_adapter.dart
 // تست عملکرد WebDatabaseAdapter
 
-import '../lib/database/database_manager.dart';
-import '../lib/models/update_history.dart';
+import 'lib/database/database_manager.dart';
+import 'lib/models/update_history.dart';
 
 Future<void> main() async {
   print('🧪 تست WebDatabaseAdapter...');

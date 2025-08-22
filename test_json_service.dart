@@ -2,7 +2,7 @@
 // تست سرویس JSON برای خطایابی
 
 import 'dart:io';
-import '../lib/services/json_update_history_service.dart';
+import 'lib/services/json_update_history_service.dart';
 
 Future<void> main() async {
   print('🔍 شروع تست سرویس JSON...');

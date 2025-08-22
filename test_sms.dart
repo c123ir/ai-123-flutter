@@ -1,7 +1,7 @@
 // test_sms.dart
 // تست سریع سرویس SMS
 
-import '../lib/services/sms_service.dart';
+import 'lib/services/sms_service.dart';
 
 void main() async {
   print('🧪 شروع تست سرویس SMS...');
