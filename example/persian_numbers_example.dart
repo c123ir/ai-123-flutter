@@ -1,8 +1,8 @@
 // example/persian_numbers_example.dart
 // مثال کاربرد ابزار تبدیل اعداد فارسی و عربی به انگلیسی
 
-import '../lib/utils/persian_number_utils.dart';
-import '../lib/services/sms_service.dart';
+import 'package:ai_123/utils/persian_number_utils.dart';
+import 'package:ai_123/services/sms_service.dart';
 
 /// مثال کامل استفاده از ابزار تبدیل اعداد فارسی
 void main() async {

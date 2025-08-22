@@ -1,7 +1,7 @@
 // lib/database/database_adapter.dart
-// آداپتور برای مدیریت دیتابیس در پلتفرم‌های مختلف
+// رابط انتزاعی برای دسترسی به دیتابیس در پلتفرم‌های مختلف
 
-import 'package:flutter/foundation.dart';
+import 'mysql_database_adapter.dart';
 
 abstract class DatabaseAdapter {
   Future<void> init();
@@ -22,11 +22,13 @@ abstract class DatabaseAdapter {
 }
 
 class DatabaseAdapterFactory {
-  static DatabaseAdapter create() {
-    if (kIsWeb) {
-      return WebDatabaseAdapter();
+  static DatabaseAdapter create({bool useMysql = false}) {
+    if (useMysql) {
+      // استفاده از MySQL Adapter (نیازمند API backend)
+      return MySqlDatabaseAdapter();
     } else {
-      return SQLiteDatabaseAdapter();
+      // استفاده از Web Adapter موقت
+      return WebDatabaseAdapter();
     }
   }
 }
@@ -221,59 +223,5 @@ class WebDatabaseAdapter implements DatabaseAdapter {
   @override
   Future<void> close() async {
     print('🔒 [Web Database] بستن اتصال');
-  }
-}
-
-// پیاده‌سازی برای SQLite
-class SQLiteDatabaseAdapter implements DatabaseAdapter {
-  // این کلاس از DatabaseHelper موجود استفاده می‌کند
-
-  @override
-  Future<void> init() async {
-    print('🗄️ [SQLite Database] مقداردهی اولیه');
-    // DatabaseHelper.instance.database را فراخوانی می‌کند
-  }
-
-  @override
-  Future<int> insert(String table, Map<String, dynamic> data) async {
-    // استفاده از DatabaseHelper موجود
-    print('💾 [SQLite Database] ذخیره $table: $data');
-    return 1;
-  }
-
-  @override
-  Future<List<Map<String, dynamic>>> query(
-    String table, {
-    String? where,
-    List<dynamic>? whereArgs,
-  }) async {
-    print('🔍 [SQLite Database] خواندن از $table');
-    return [];
-  }
-
-  @override
-  Future<int> update(
-    String table,
-    Map<String, dynamic> data, {
-    String? where,
-    List<dynamic>? whereArgs,
-  }) async {
-    print('✏️ [SQLite Database] بروزرسانی $table: $data');
-    return 1;
-  }
-
-  @override
-  Future<int> delete(
-    String table, {
-    String? where,
-    List<dynamic>? whereArgs,
-  }) async {
-    print('🗑️ [SQLite Database] حذف از $table');
-    return 1;
-  }
-
-  @override
-  Future<void> close() async {
-    print('🔒 [SQLite Database] بستن اتصال');
   }
 }

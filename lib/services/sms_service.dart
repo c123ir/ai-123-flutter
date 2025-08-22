@@ -2,18 +2,27 @@
 // سرویس مدیریت پیامک - ارسال و دریافت پیامک از طریق سامانه‌های مختلف
 
 import 'package:http/http.dart' as http;
-import '../database/database_helper.dart';
+import '../database/database_manager.dart';
 import '../models/sms_provider.dart';
 import '../models/sms_config.dart';
 import '../models/sms_log.dart';
 import '../utils/persian_number_utils.dart';
 
 class SmsService {
-  final DatabaseHelper _db = DatabaseHelper.instance;
+  // Singleton pattern
+  static SmsService? _instance;
+  static SmsService get instance {
+    _instance ??= SmsService._internal();
+    return _instance!;
+  }
+
+  // Private constructor
+  SmsService._internal();
 
   // لیست تمام سامانه‌های پیامکی فعال
   Future<List<SmsProvider>> getActiveProviders() async {
-    final data = await _db.queryAll('sms_providers');
+    final adapter = await DatabaseManager.getAdapter();
+    final data = await adapter.query('sms_providers');
     return data
         .where((row) => row['is_active'] == 1)
         .map((row) => SmsProvider.fromMap(row))
@@ -23,8 +32,8 @@ class SmsService {
 
   // دریافت تنظیمات یک سامانه پیامکی
   Future<Map<String, String>> getProviderConfigs(int providerId) async {
-    final db = await _db.database;
-    final result = await db.query(
+    final adapter = await DatabaseManager.getAdapter();
+    final result = await adapter.query(
       'sms_configs',
       where: 'provider_id = ?',
       whereArgs: [providerId],
@@ -44,6 +53,8 @@ class SmsService {
     required String message,
     int? specificProviderId,
   }) async {
+    final adapter = await DatabaseManager.getAdapter();
+
     // تمیز کردن و فرمت کردن شماره تلفن (تبدیل اعداد فارسی به انگلیسی)
     final cleanPhone = PersianNumberUtils.formatIranianMobile(phone);
     final cleanMessage = PersianNumberUtils.convertToEnglish(message);
@@ -64,9 +75,13 @@ class SmsService {
     // انتخاب سامانه ارسال
     SmsProvider? provider;
     if (specificProviderId != null) {
-      final data = await _db.queryById('sms_providers', specificProviderId);
-      if (data != null) {
-        provider = SmsProvider.fromMap(data);
+      final data = await adapter.query(
+        'sms_providers',
+        where: 'id = ?',
+        whereArgs: [specificProviderId],
+      );
+      if (data.isNotEmpty) {
+        provider = SmsProvider.fromMap(data.first);
       }
     } else {
       final providers = await getActiveProviders();
@@ -78,11 +93,12 @@ class SmsService {
     }
 
     // ایجاد لاگ پیامک
-    final logId = await _db.insert('sms_logs', {
+    final logId = await adapter.insert('sms_logs', {
       'provider_id': provider.id,
-      'recipient_phone': cleanPhone, // استفاده از شماره تمیز شده
-      'message_text': cleanMessage, // استفاده از پیام تمیز شده
+      'recipient_phone': cleanPhone,
+      'message_text': cleanMessage,
       'status': 'pending',
+      'created_at': DateTime.now().toIso8601String(),
     });
 
     try {
@@ -135,16 +151,41 @@ class SmsService {
 
       // بروزرسانی وضعیت لاگ
       final status = responseCode == '0' ? 'sent' : 'failed';
-      await _db.update('sms_logs', {
-        'status': status,
-        'response_code': responseCode,
-        'response_message': responseMessage,
-        'sent_at': DateTime.now().toIso8601String(),
-      }, logId);
+      await adapter.update(
+        'sms_logs',
+        {
+          'status': status,
+          'response_code': responseCode,
+          'response_message': responseMessage,
+          'sent_at': DateTime.now().toIso8601String(),
+        },
+        where: 'id = ?',
+        whereArgs: [logId],
+      );
 
       // بازگردانی لاگ به‌روزرسانی شده
-      final updatedLogData = await _db.queryById('sms_logs', logId);
-      return SmsLog.fromMap(updatedLogData!);
+      final updatedLogData = await adapter.query(
+        'sms_logs',
+        where: 'id = ?',
+        whereArgs: [logId],
+      );
+
+      if (updatedLogData.isNotEmpty) {
+        return SmsLog.fromMap(updatedLogData.first);
+      } else {
+        // اگر لاگ پیدا نشد، یک لاگ جدید با اطلاعات موجود برگردان
+        return SmsLog(
+          id: logId,
+          providerId: provider.id!,
+          recipientPhone: cleanPhone,
+          messageText: cleanMessage,
+          status: status,
+          responseCode: responseCode,
+          responseMessage: responseMessage,
+          createdAt: DateTime.now(),
+          sentAt: DateTime.now(),
+        );
+      }
     } catch (e) {
       // ثبت خطا در لاگ با جزئیات بیشتر
       String errorMessage = e.toString();
@@ -164,20 +205,44 @@ class SmsService {
         } else if (errorMessage.contains('Certificate')) {
           errorMessage = 'خطای امنیتی: مشکل در گواهی SSL سرور.';
         } else {
-          errorMessage = 'خطای شبکه: ' + errorMessage;
+          errorMessage = 'خطای شبکه: $errorMessage';
         }
       }
 
       print('🚨 [SMS ERROR] جزئیات خطا: $errorMessage');
 
-      await _db.update('sms_logs', {
-        'status': 'failed',
-        'response_code': 'CONNECTION_ERROR',
-        'response_message': errorMessage,
-      }, logId);
+      await adapter.update(
+        'sms_logs',
+        {
+          'status': 'failed',
+          'response_code': 'CONNECTION_ERROR',
+          'response_message': errorMessage,
+        },
+        where: 'id = ?',
+        whereArgs: [logId],
+      );
 
-      final failedLogData = await _db.queryById('sms_logs', logId);
-      return SmsLog.fromMap(failedLogData!);
+      final failedLogData = await adapter.query(
+        'sms_logs',
+        where: 'id = ?',
+        whereArgs: [logId],
+      );
+
+      if (failedLogData.isNotEmpty) {
+        return SmsLog.fromMap(failedLogData.first);
+      } else {
+        // اگر لاگ پیدا نشد، یک لاگ جدید با اطلاعات خطا برگردان
+        return SmsLog(
+          id: logId,
+          providerId: provider.id!,
+          recipientPhone: cleanPhone,
+          messageText: cleanMessage,
+          status: 'failed',
+          responseCode: 'CONNECTION_ERROR',
+          responseMessage: errorMessage,
+          createdAt: DateTime.now(),
+        );
+      }
     }
   }
 
@@ -187,6 +252,7 @@ class SmsService {
     required String message,
     int? specificProviderId,
   }) async {
+    final adapter = await DatabaseManager.getAdapter();
     final results = <SmsLog>[];
 
     for (final phone in phones) {
@@ -199,20 +265,178 @@ class SmsService {
         results.add(result);
       } catch (e) {
         // در صورت خطا، لاگ شکست ایجاد می‌کنیم
-        final logId = await _db.insert('sms_logs', {
+        final logId = await adapter.insert('sms_logs', {
           'provider_id': specificProviderId ?? 1,
           'recipient_phone': phone,
           'message_text': message,
           'status': 'failed',
           'response_message': e.toString(),
+          'created_at': DateTime.now().toIso8601String(),
         });
 
-        final failedLogData = await _db.queryById('sms_logs', logId);
-        results.add(SmsLog.fromMap(failedLogData!));
+        final failedLogData = await adapter.query(
+          'sms_logs',
+          where: 'id = ?',
+          whereArgs: [logId],
+        );
+
+        if (failedLogData.isNotEmpty) {
+          results.add(SmsLog.fromMap(failedLogData.first));
+        }
       }
     }
 
     return results;
+  }
+
+  // دریافت تاریخچه پیامک‌ها
+  Future<List<SmsLog>> getSmsHistory({
+    int? providerId,
+    String? status,
+    DateTime? fromDate,
+    DateTime? toDate,
+    int limit = 100,
+  }) async {
+    final adapter = await DatabaseManager.getAdapter();
+
+    String whereClause = '1=1';
+    List<dynamic> whereArgs = [];
+
+    if (providerId != null) {
+      whereClause += ' AND provider_id = ?';
+      whereArgs.add(providerId);
+    }
+
+    if (status != null) {
+      whereClause += ' AND status = ?';
+      whereArgs.add(status);
+    }
+
+    if (fromDate != null) {
+      whereClause += ' AND created_at >= ?';
+      whereArgs.add(fromDate.toIso8601String());
+    }
+
+    if (toDate != null) {
+      whereClause += ' AND created_at <= ?';
+      whereArgs.add(toDate.toIso8601String());
+    }
+
+    // استفاده از query ساده به جای استفاده از orderBy و limit که در adapter موجود نیست
+    final result = await adapter.query(
+      'sms_logs',
+      where: whereClause,
+      whereArgs: whereArgs,
+    );
+
+    // مرتب‌سازی و محدود کردن در Dart
+    final sortedResult = result
+      ..sort((a, b) {
+        final aDate =
+            DateTime.tryParse(a['created_at'] ?? '') ?? DateTime.now();
+        final bDate =
+            DateTime.tryParse(b['created_at'] ?? '') ?? DateTime.now();
+        return bDate.compareTo(aDate); // DESC
+      });
+
+    final limitedResult = sortedResult.take(limit).toList();
+    return limitedResult.map((row) => SmsLog.fromMap(row)).toList();
+  }
+
+  // آمار پیامک‌ها
+  Future<Map<String, int>> getSmsStats() async {
+    final adapter = await DatabaseManager.getAdapter();
+
+    // دریافت تمام لاگ‌ها و محاسبه آمار در Dart
+    final allLogs = await adapter.query('sms_logs');
+
+    int total = allLogs.length;
+    int sent = allLogs.where((log) => log['status'] == 'sent').length;
+    int failed = allLogs.where((log) => log['status'] == 'failed').length;
+    int pending = allLogs.where((log) => log['status'] == 'pending').length;
+
+    return {'total': total, 'sent': sent, 'failed': failed, 'pending': pending};
+  }
+
+  // تست اتصال سامانه پیامکی
+  Future<bool> testProvider(int providerId) async {
+    try {
+      // ارسال پیامک تست به شماره مدیر
+      await sendSms(
+        phone: '09123456789', // شماره تست
+        message: 'تست اتصال سامانه پیامکی - ${DateTime.now()}',
+        specificProviderId: providerId,
+      );
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  // تست تنظیمات سامانه با جزئیات
+  Future<Map<String, dynamic>> testProviderDetailed(int providerId) async {
+    final adapter = await DatabaseManager.getAdapter();
+    try {
+      final provider = await adapter.query(
+        'sms_providers',
+        where: 'id = ?',
+        whereArgs: [providerId],
+      );
+
+      if (provider.isEmpty) {
+        return {
+          'success': false,
+          'error': 'سامانه با شناسه $providerId یافت نشد',
+        };
+      }
+
+      final smsProvider = SmsProvider.fromMap(provider.first);
+      final configs = await getProviderConfigs(providerId);
+
+      // بررسی تنظیمات ضروری
+      final requiredConfigs = _getRequiredConfigs(smsProvider.providerType);
+      for (final requiredConfig in requiredConfigs) {
+        if (!configs.containsKey(requiredConfig) ||
+            configs[requiredConfig]?.isEmpty == true) {
+          return {
+            'success': false,
+            'error': 'تنظیم $requiredConfig وجود ندارد یا خالی است',
+            'configs': configs,
+          };
+        }
+      }
+
+      // ارسال پیامک تست
+      final result = await sendSms(
+        phone: '09123456789',
+        message: 'تست سامانه ${smsProvider.name} - ${DateTime.now()}',
+        specificProviderId: providerId,
+      );
+
+      return {
+        'success': result.status == 'sent',
+        'result': result.toMap(),
+        'configs': configs,
+      };
+    } catch (e) {
+      return {'success': false, 'error': e.toString()};
+    }
+  }
+
+  // دریافت لیست تنظیمات ضروری برای هر نوع سامانه
+  List<String> _getRequiredConfigs(String providerType) {
+    switch (providerType) {
+      case '0098sms':
+        return ['username', 'password', 'from', 'api_url'];
+      case 'kavenegar':
+        return ['api_key', 'from'];
+      case 'ghasedak':
+        return ['api_key', 'from'];
+      case 'custom':
+        return ['api_url'];
+      default:
+        return [];
+    }
   }
 
   // ارسال پیامک از طریق سامانه ۰۰۹۸
@@ -534,148 +758,6 @@ class SmsService {
       }
     } catch (e) {
       throw Exception('خطا در ارسال پیامک: $e');
-    }
-  }
-
-  // دریافت تاریخچه پیامک‌ها
-  Future<List<SmsLog>> getSmsHistory({
-    int? providerId,
-    String? status,
-    DateTime? fromDate,
-    DateTime? toDate,
-    int limit = 100,
-  }) async {
-    final db = await _db.database;
-
-    String whereClause = '1=1';
-    List<dynamic> whereArgs = [];
-
-    if (providerId != null) {
-      whereClause += ' AND provider_id = ?';
-      whereArgs.add(providerId);
-    }
-
-    if (status != null) {
-      whereClause += ' AND status = ?';
-      whereArgs.add(status);
-    }
-
-    if (fromDate != null) {
-      whereClause += ' AND created_at >= ?';
-      whereArgs.add(fromDate.toIso8601String());
-    }
-
-    if (toDate != null) {
-      whereClause += ' AND created_at <= ?';
-      whereArgs.add(toDate.toIso8601String());
-    }
-
-    final result = await db.query(
-      'sms_logs',
-      where: whereClause,
-      whereArgs: whereArgs,
-      orderBy: 'created_at DESC',
-      limit: limit,
-    );
-
-    return result.map((row) => SmsLog.fromMap(row)).toList();
-  }
-
-  // آمار پیامک‌ها
-  Future<Map<String, int>> getSmsStats() async {
-    final db = await _db.database;
-
-    final total = await db.rawQuery('SELECT COUNT(*) as count FROM sms_logs');
-    final sent = await db.rawQuery(
-      'SELECT COUNT(*) as count FROM sms_logs WHERE status = "sent"',
-    );
-    final failed = await db.rawQuery(
-      'SELECT COUNT(*) as count FROM sms_logs WHERE status = "failed"',
-    );
-    final pending = await db.rawQuery(
-      'SELECT COUNT(*) as count FROM sms_logs WHERE status = "pending"',
-    );
-
-    return {
-      'total': total[0]['count'] as int,
-      'sent': sent[0]['count'] as int,
-      'failed': failed[0]['count'] as int,
-      'pending': pending[0]['count'] as int,
-    };
-  }
-
-  // تست اتصال سامانه پیامکی
-  Future<bool> testProvider(int providerId) async {
-    try {
-      // ارسال پیامک تست به شماره مدیر
-      await sendSms(
-        phone: '09123456789', // شماره تست
-        message: 'تست اتصال سامانه پیامکی - ${DateTime.now()}',
-        specificProviderId: providerId,
-      );
-      return true;
-    } catch (e) {
-      return false;
-    }
-  }
-
-  // تست تنظیمات سامانه با جزئیات
-  Future<Map<String, dynamic>> testProviderDetailed(int providerId) async {
-    try {
-      final provider = await _db.queryById('sms_providers', providerId);
-      if (provider == null) {
-        return {
-          'success': false,
-          'error': 'سامانه با شناسه $providerId یافت نشد',
-        };
-      }
-
-      final smsProvider = SmsProvider.fromMap(provider);
-      final configs = await getProviderConfigs(providerId);
-
-      // بررسی تنظیمات ضروری
-      final requiredConfigs = _getRequiredConfigs(smsProvider.providerType);
-      for (final requiredConfig in requiredConfigs) {
-        if (!configs.containsKey(requiredConfig) ||
-            configs[requiredConfig]?.isEmpty == true) {
-          return {
-            'success': false,
-            'error': 'تنظیم $requiredConfig وجود ندارد یا خالی است',
-            'configs': configs,
-          };
-        }
-      }
-
-      // ارسال پیامک تست
-      final result = await sendSms(
-        phone: '09123456789',
-        message: 'تست سامانه ${smsProvider.name} - ${DateTime.now()}',
-        specificProviderId: providerId,
-      );
-
-      return {
-        'success': result.status == 'sent',
-        'result': result.toMap(),
-        'configs': configs,
-      };
-    } catch (e) {
-      return {'success': false, 'error': e.toString()};
-    }
-  }
-
-  // دریافت لیست تنظیمات ضروری برای هر نوع سامانه
-  List<String> _getRequiredConfigs(String providerType) {
-    switch (providerType) {
-      case '0098sms':
-        return ['username', 'password', 'from', 'api_url'];
-      case 'kavenegar':
-        return ['api_key', 'from'];
-      case 'ghasedak':
-        return ['api_key', 'from'];
-      case 'custom':
-        return ['api_url'];
-      default:
-        return [];
     }
   }
 }

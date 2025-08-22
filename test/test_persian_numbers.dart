@@ -1,7 +1,7 @@
 // test_persian_numbers.dart
 // تست تابع تبدیل اعداد فارسی به انگلیسی
 
-import 'lib/utils/persian_number_utils.dart';
+import '../lib/utils/persian_number_utils.dart';
 
 void main() {
   print('=== تست تبدیل اعداد فارسی به انگلیسی ===');

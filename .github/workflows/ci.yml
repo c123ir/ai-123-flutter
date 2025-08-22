@@ -1,0 +1,154 @@
+# .github/workflows/ci.yml
+# GitHub Actions CI/CD Pipeline for stability and quality assurance
+
+name: Flutter CI/CD Pipeline
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+jobs:
+  # مرحله تست و کیفیت کد
+  test:
+    name: Test & Code Quality
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.35.1"
+          channel: "stable"
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Verify formatting
+        run: dart format --output=none --set-exit-if-changed .
+
+      - name: Analyze project source
+        run: flutter analyze
+
+      - name: Run tests
+        run: flutter test --coverage
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          file: coverage/lcov.info
+
+  # مرحله build برای پلتفرم‌های مختلف
+  build:
+    name: Build Applications
+    needs: test
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        include:
+          - os: ubuntu-latest
+            build-target: android
+          - os: macos-latest
+            build-target: ios
+          - os: macos-latest
+            build-target: macos
+          - os: windows-latest
+            build-target: windows
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.35.1"
+          channel: "stable"
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Build for Android
+        if: matrix.build-target == 'android'
+        run: flutter build apk --debug
+
+      - name: Build for iOS
+        if: matrix.build-target == 'ios'
+        run: flutter build ios --debug --no-codesign
+
+      - name: Build for macOS
+        if: matrix.build-target == 'macos'
+        run: flutter build macos --debug
+
+      - name: Build for Windows
+        if: matrix.build-target == 'windows'
+        run: flutter build windows --debug
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: build-${{ matrix.build-target }}-${{ github.sha }}
+          path: build/
+
+  # مرحله dependency security check
+  security:
+    name: Security Scan
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.35.1"
+          channel: "stable"
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Check for dependency vulnerabilities
+        run: flutter pub deps --json | dart pub global run dependency_validator
+        continue-on-error: true
+
+      - name: Run dart code metrics
+        run: |
+          dart pub global activate dart_code_metrics
+          dart pub global run dart_code_metrics:metrics analyze lib
+        continue-on-error: true
+
+  # مرحله deployment (فقط برای main branch)
+  deploy:
+    name: Deploy to Staging
+    needs: [test, build, security]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.35.1"
+          channel: "stable"
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Build for web
+        run: flutter build web --release
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./build/web

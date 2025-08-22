@@ -14,7 +14,7 @@ class SmsPanel extends StatefulWidget {
 }
 
 class _SmsPanelState extends State<SmsPanel> with TickerProviderStateMixin {
-  final SmsService _smsService = SmsService();
+  final SmsService _smsService = SmsService.instance;
   late TabController _tabController;
 
   final _phoneController = TextEditingController();

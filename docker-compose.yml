@@ -1,0 +1,39 @@
+# docker-compose.yml
+# Docker Compose setup برای development environment
+
+version: '3.8'
+
+services:
+  flutter-dev:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.dev
+    container_name: ai-123-flutter-dev
+    volumes:
+      - .:/workspace
+      - flutter_cache:/home/developer/.flutter
+      - pub_cache:/home/developer/.pub-cache
+    ports:
+      - "8080:8080"
+      - "9100-9200:9100-9200"  # DevTools ports
+    environment:
+      - FLUTTER_WEB_PORT=8080
+      - FLUTTER_WEB_HOSTNAME=0.0.0.0
+    working_dir: /workspace
+    stdin_open: true
+    tty: true
+    command: tail -f /dev/null  # Keep container running
+
+  # Redis برای caching (اختیاری)
+  redis:
+    image: redis:7-alpine
+    container_name: ai-123-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+volumes:
+  flutter_cache:
+  pub_cache:
+  redis_data:

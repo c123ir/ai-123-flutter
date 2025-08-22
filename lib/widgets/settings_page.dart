@@ -2,7 +2,6 @@
 // صفحه تنظیمات کلی سیستم
 
 import 'package:flutter/material.dart';
-import 'sms_providers_management.dart';
 
 class SettingsPage extends StatelessWidget {
   const SettingsPage({super.key});
@@ -30,12 +29,22 @@ class SettingsPage extends StatelessWidget {
               icon: Icons.sms_rounded,
               color: const Color(0xFF667eea),
               onTap: () {
+                // موقتاً غیرفعال - SmsProvidersManagement در حال بازنویسی برای MySQL
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text(
+                      'مدیریت سامانه‌های پیامک در حال بازنویسی برای MySQL',
+                    ),
+                  ),
+                );
+                /*
                 Navigator.push(
                   context,
                   MaterialPageRoute(
                     builder: (context) => const SmsProvidersManagement(),
                   ),
                 );
+                */
               },
             ),
             const SizedBox(height: 16),

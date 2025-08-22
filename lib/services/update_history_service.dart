@@ -1,12 +1,20 @@
 // lib/services/update_history_service.dart
 // سرویس مدیریت تاریخچه بروزرسانی - CRUD operations و منطق کسب‌وکار
 
-import '../database/database_helper.dart';
+import '../database/database_manager.dart';
 import '../models/update_history.dart';
 import '../utils/persian_number_utils.dart';
 
 class UpdateHistoryService {
-  final DatabaseHelper _db = DatabaseHelper.instance;
+  // Singleton pattern
+  static UpdateHistoryService? _instance;
+  static UpdateHistoryService get instance {
+    _instance ??= UpdateHistoryService._internal();
+    return _instance!;
+  }
+
+  // Private constructor
+  UpdateHistoryService._internal();
 
   /// ثبت بروزرسانی جدید
   Future<int> addUpdate({
@@ -41,7 +49,8 @@ class UpdateHistoryService {
         status: status,
       );
 
-      final id = await _db.insert('update_history', update.toMap());
+      final adapter = await DatabaseManager.getAdapter();
+      final id = await adapter.insert('update_history', update.toMap());
 
       print('✅ [تاریخچه] بروزرسانی جدید ثبت شد: $title (ID: $id)');
       return id;
@@ -72,24 +81,43 @@ class UpdateHistoryService {
         whereArgs.add(priority);
       }
 
-      final db = await _db.database;
-      String sql = 'SELECT * FROM update_history';
-      List<dynamic> args = [];
+      // ساخت شرط WHERE برای query
+      String? where;
+      List<dynamic>? whereParams;
 
-      if (whereClause.isNotEmpty) {
-        sql += ' WHERE $whereClause';
-        args = whereArgs;
+      if (category != null && priority != null) {
+        where = 'category = ? AND priority = ?';
+        whereParams = [category, priority];
+      } else if (category != null) {
+        where = 'category = ?';
+        whereParams = [category];
+      } else if (priority != null) {
+        where = 'priority = ?';
+        whereParams = [priority];
       }
 
-      sql += ' ORDER BY created_at DESC';
+      final adapter = await DatabaseManager.getAdapter();
+      final data = await adapter.query(
+        'update_history',
+        where: where,
+        whereArgs: whereParams,
+      );
 
-      if (limit != null) {
-        sql += ' LIMIT $limit';
-      }
+      // مرتب‌سازی بر اساس تاریخ (نزولی)
+      data.sort((a, b) {
+        final aDate =
+            DateTime.tryParse(a['created_at'] ?? '') ?? DateTime(1970);
+        final bDate =
+            DateTime.tryParse(b['created_at'] ?? '') ?? DateTime(1970);
+        return bDate.compareTo(aDate);
+      });
 
-      final data = await db.rawQuery(sql, args);
+      // محدود کردن تعداد نتایج
+      final limitedData = limit != null && limit < data.length
+          ? data.take(limit).toList()
+          : data;
 
-      return data.map((map) => UpdateHistory.fromMap(map)).toList();
+      return limitedData.map((map) => UpdateHistory.fromMap(map)).toList();
     } catch (e) {
       print('❌ [تاریخچه] خطا در دریافت بروزرسانی‌ها: $e');
       return [];
@@ -99,9 +127,15 @@ class UpdateHistoryService {
   /// دریافت بروزرسانی بر اساس ID
   Future<UpdateHistory?> getUpdateById(int id) async {
     try {
-      final data = await _db.queryById('update_history', id);
-      if (data != null) {
-        return UpdateHistory.fromMap(data);
+      final adapter = await DatabaseManager.getAdapter();
+      final data = await adapter.query(
+        'update_history',
+        where: 'id = ?',
+        whereArgs: [id],
+      );
+
+      if (data.isNotEmpty) {
+        return UpdateHistory.fromMap(data.first);
       }
       return null;
     } catch (e) {
@@ -113,10 +147,12 @@ class UpdateHistoryService {
   /// بروزرسانی یک رکورد
   Future<bool> updateHistory(UpdateHistory update) async {
     try {
-      final result = await _db.update(
+      final adapter = await DatabaseManager.getAdapter();
+      final result = await adapter.update(
         'update_history',
         update.toMap(),
-        update.id!,
+        where: 'id = ?',
+        whereArgs: [update.id],
       );
 
       print('✅ [تاریخچه] بروزرسانی ویرایش شد: ${update.title}');
@@ -145,7 +181,12 @@ class UpdateHistoryService {
   /// حذف بروزرسانی
   Future<bool> deleteUpdate(int id) async {
     try {
-      final result = await _db.delete('update_history', id);
+      final adapter = await DatabaseManager.getAdapter();
+      final result = await adapter.delete(
+        'update_history',
+        where: 'id = ?',
+        whereArgs: [id],
+      );
       print('✅ [تاریخچه] بروزرسانی حذف شد (ID: $id)');
       return result > 0;
     } catch (e) {
@@ -201,13 +242,17 @@ class UpdateHistoryService {
   /// جستجو در بروزرسانی‌ها
   Future<List<UpdateHistory>> searchUpdates(String query) async {
     try {
-      final db = await _db.database;
-      final data = await db.rawQuery(
-        'SELECT * FROM update_history WHERE title LIKE ? OR user_problem LIKE ? OR solution_description LIKE ? ORDER BY created_at DESC',
-        ['%$query%', '%$query%', '%$query%'],
-      );
+      // دریافت تمام رکوردها و فیلتر کردن آن‌ها در Dart
+      final allUpdates = await getAllUpdates();
 
-      return data.map((map) => UpdateHistory.fromMap(map)).toList();
+      final filteredUpdates = allUpdates.where((update) {
+        final searchQuery = query.toLowerCase();
+        return update.title.toLowerCase().contains(searchQuery) ||
+            update.userProblem.toLowerCase().contains(searchQuery) ||
+            update.solutionDescription.toLowerCase().contains(searchQuery);
+      }).toList();
+
+      return filteredUpdates;
     } catch (e) {
       print('❌ [تاریخچه] خطا در جستجو: $e');
       return [];
@@ -262,11 +307,21 @@ class UpdateHistoryService {
   /// دریافت بروزرسانی‌ها بر اساس نسخه
   Future<List<UpdateHistory>> getUpdatesByVersion(String version) async {
     try {
-      final db = await _db.database;
-      final data = await db.rawQuery(
-        'SELECT * FROM update_history WHERE version = ? ORDER BY created_at DESC',
-        [version],
+      final adapter = await DatabaseManager.getAdapter();
+      final data = await adapter.query(
+        'update_history',
+        where: 'version = ?',
+        whereArgs: [version],
       );
+
+      // مرتب‌سازی بر اساس تاریخ (نزولی)
+      data.sort((a, b) {
+        final aDate =
+            DateTime.tryParse(a['created_at'] ?? '') ?? DateTime(1970);
+        final bDate =
+            DateTime.tryParse(b['created_at'] ?? '') ?? DateTime(1970);
+        return bDate.compareTo(aDate);
+      });
 
       return data.map((map) => UpdateHistory.fromMap(map)).toList();
     } catch (e) {

@@ -6,6 +6,8 @@ import 'lib/services/sms_service.dart';
 import 'lib/models/sms_provider.dart';
 
 class ManualSmsTestWidget extends StatefulWidget {
+  const ManualSmsTestWidget({super.key});
+
   @override
   _ManualSmsTestWidgetState createState() => _ManualSmsTestWidgetState();
 }

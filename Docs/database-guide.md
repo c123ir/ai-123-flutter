@@ -15,6 +15,8 @@
 8. [Backup & Recovery](#backup--recovery)
 9. [Performance Optimization](#performance-optimization)
 10. [Security](#security)
+11. [سیستم تاریخچه MySQL](#سیستم-تاریخچه-mysql) **جدید**
+12. [دستورات ساده MySQL](#دستورات-ساده-mysql) **جدید**
 
 ---
 
@@ -897,6 +899,163 @@ INSERT INTO products (name, price, category, is_active) VALUES
 
 ---
 
-**نسخه:** 1.0.0  
-**آخرین به‌روزرسانی:** ۳۰ مرداد ۱۴۰۴  
+## 📋 سیستم تاریخچه MySQL
+
+### **🎯 هدف**
+
+سیستم تاریخچه بروزرسانی MySQL برای ردیابی تمام تغییرات پروژه طراحی شده است.
+
+### **🗄️ جدول update_history**
+
+```sql
+CREATE TABLE update_history (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    title VARCHAR(255) NOT NULL,
+    version VARCHAR(50) NOT NULL,
+    shamsi_date VARCHAR(20) NOT NULL,
+    shamsi_time VARCHAR(10) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    user_problem TEXT NOT NULL,
+    solution_description TEXT NOT NULL,
+    user_comment TEXT,
+    tags TEXT,
+    priority ENUM('low', 'medium', 'high', 'critical') DEFAULT 'medium',
+    category ENUM('feature', 'bugfix', 'enhancement', 'security', 'testing') DEFAULT 'feature',
+    status ENUM('completed', 'in_progress', 'planned') DEFAULT 'completed'
+);
+```
+
+### **🏷️ دسته‌بندی‌های استاندارد**
+
+| **Category** | **توضیح** | **مثال** |
+|-------------|----------|---------|
+| `feature` | ویژگی جدید | اضافه کردن سیستم پیامک |
+| `bugfix` | رفع باگ | رفع مشکل اتصال دیتابیس |
+| `enhancement` | بهبود موجود | بهینه‌سازی UI |
+| `security` | امنیت | بروزرسانی احراز هویت |
+| `testing` | تست | اضافه کردن unit tests |
+
+| **Priority** | **توضیح** | **زمان اجرا** |
+|-------------|----------|-------------|
+| `low` | کم‌اهمیت | هفته‌ها |
+| `medium` | متوسط | روزها |
+| `high` | مهم | ساعت‌ها |
+| `critical` | بحرانی | فوری |
+
+---
+
+## 💻 دستورات ساده MySQL
+
+### **🔍 مشاهده تاریخچه**
+
+```bash
+# آخرین 5 بروزرسانی
+mysql -u root ai_123 -e "
+SELECT id, title, version, shamsi_date, category, priority
+FROM update_history
+ORDER BY id DESC
+LIMIT 5;"
+
+# آمار کلی
+mysql -u root ai_123 -e "
+SELECT category, COUNT(*) as count
+FROM update_history
+GROUP BY category
+ORDER BY count DESC;"
+
+# جستجو در عناوین
+mysql -u root ai_123 -e "
+SELECT title, shamsi_date, category
+FROM update_history
+WHERE title LIKE '%پیامک%'
+ORDER BY id DESC;"
+```
+
+### **➕ ثبت بروزرسانی جدید**
+
+```bash
+# ثبت ویژگی جدید
+mysql -u root ai_123 -e "
+INSERT INTO update_history (
+    title, version, shamsi_date, shamsi_time,
+    user_problem, solution_description, tags,
+    priority, category, status
+) VALUES (
+    'اضافه کردن ویژگی جدید',
+    '1.2.0',
+    '۱۴۰۴/۰۶/۰۱',
+    '$(date +%H:%M)',
+    'شرح نیاز کاربر',
+    'شرح راه‌حل پیاده‌سازی شده',
+    'feature, new, enhancement',
+    'medium',
+    'feature',
+    'completed'
+);"
+
+# ثبت رفع باگ
+mysql -u root ai_123 -e "
+INSERT INTO update_history (
+    title, version, shamsi_date, shamsi_time,
+    user_problem, solution_description, tags,
+    priority, category, status
+) VALUES (
+    'رفع مشکل [شرح مشکل]',
+    '1.2.1',
+    '۱۴۰۴/۰۶/۰۱',
+    '$(date +%H:%M)',
+    'گزارش باگ: [توضیح]',
+    'راه‌حل: [شرح رفع مشکل]',
+    'bugfix, fix, urgent',
+    'high',
+    'bugfix',
+    'completed'
+);"
+```
+
+### **🔧 مدیریت دیتابیس**
+
+```bash
+# بررسی وضعیت دیتابیس
+mysql -u root -e "SHOW DATABASES LIKE 'ai_123';"
+
+# بررسی جداول
+mysql -u root ai_123 -e "SHOW TABLES;"
+
+# بررسی ساختار جدول
+mysql -u root ai_123 -e "DESCRIBE update_history;"
+
+# تعداد کل رکوردها
+mysql -u root ai_123 -e "SELECT COUNT(*) as total_updates FROM update_history;"
+
+# پاک کردن دیتابیس (احتیاط!)
+# mysql -u root -e "DROP DATABASE ai_123;"
+```
+
+### **📊 گزارش‌گیری پیشرفته**
+
+```bash
+# گزارش ماهانه
+mysql -u root ai_123 -e "
+SELECT 
+    LEFT(shamsi_date, 7) as month,
+    category,
+    COUNT(*) as count
+FROM update_history
+GROUP BY month, category
+ORDER BY month DESC, count DESC;"
+
+# گزارش اولویت‌ها
+mysql -u root ai_123 -e "
+SELECT priority, COUNT(*) as count, 
+       ROUND(COUNT(*) * 100.0 / (SELECT COUNT(*) FROM update_history), 2) as percentage
+FROM update_history
+GROUP BY priority
+ORDER BY count DESC;"
+```
+
+---
+
+**نسخه:** 1.2.0  
+**آخرین به‌روزرسانی:** ۱ شهریور ۱۴۰۴  
 **نگهداری:** تیم توسعه دستیار هوشمند یک دو سه

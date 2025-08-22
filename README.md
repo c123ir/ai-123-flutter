@@ -15,6 +15,7 @@
 - 🎨 [راهنمای کامپوننت‌ها](./Docs/ui-components.md)
 - 📱 [مستندات سیستم پیامک](./Docs/SMS_Documentation.md) **جدید**
 - 🔢 [راهنمای سریع تبدیل اعداد فارسی](./Docs/persian_numbers_quick_guide.md) **جدید**
+- ⏰ [سیستم تاریخچه بروزرسانی MySQL](./Docs/mysql-update-history-guide.md) **جدید**
 - 📋 [سوالات متداول](./Docs/faq.md)i-123-flutter/actions/workflows/flutter.yml)
 [![Release](https://github.com/c123ir/ai-123-flutter/actions/workflows/release.yml/badge.svg)](https://github.com/c123ir/ai-123-flutter/actions/workflows/release.yml)
 [![Flutter Version](https://img.shields.io/badge/Flutter-3.8.1-blue.svg)](https://flutter.dev/)
@@ -143,10 +144,6 @@ backend/              # Backend API سرور
 ├── schema.sql        # MySQL Database Schema
 └── package.json      # Node.js Dependencies
 ```
-├── scripts/           # اسکریپت‌های کمکی
-│   ├── auto_register_update.dart  # جدید: ثبت خودکار بروزرسانی
-│   ├── quick-push.sh
-│   └── create-release.sh
 └── main.dart
 
 .github/
@@ -307,6 +304,114 @@ Navigator.push(
 - 📊 **Analytics Ready** - آماده برای تحلیل داده
 - 🌍 **Internationalization** - پشتیبانی چند زبانه
 - ♿ **Accessibility** - سازگار با ابزارهای کمکی
+
+## 📋 مدیریت تاریخچه بروزرسانی
+
+### 🔄 ثبت خودکار تغییرات در MySQL
+
+پروژه از سیستم تاریخچه بروزرسانی مبتنی بر MySQL استفاده می‌کند. برای ثبت تغییرات جدید:
+
+```bash
+# ثبت مستقیم در MySQL (روش ساده و سریع)
+mysql -u root ai_123 -e "
+INSERT INTO update_history (
+    title, 
+    version, 
+    shamsi_date, 
+    shamsi_time, 
+    user_problem, 
+    solution_description, 
+    tags, 
+    priority, 
+    category, 
+    status
+) VALUES (
+    'عنوان تغییر',
+    'نسخه پروژه',
+    'تاریخ شمسی',
+    'زمان',
+    'شرح مشکل یا نیاز',
+    'شرح راه‌حل پیاده‌سازی شده',
+    'برچسب‌ها جدا شده با کاما',
+    'low|medium|high|critical',
+    'feature|bugfix|enhancement|security|testing',
+    'completed|in_progress|planned'
+);"
+```
+
+### 📊 مشاهده تاریخچه
+
+```bash
+# نمایش آخرین تغییرات
+mysql -u root ai_123 -e "
+SELECT id, title, version, shamsi_date, priority, category 
+FROM update_history 
+ORDER BY id DESC 
+LIMIT 10;"
+
+# آمار کلی تاریخچه
+mysql -u root ai_123 -e "
+SELECT 
+    category,
+    COUNT(*) as count,
+    priority
+FROM update_history 
+GROUP BY category, priority 
+ORDER BY count DESC;"
+```
+
+### 🎯 مثال ثبت تغییر
+
+```bash
+# مثال کامل ثبت یک تغییر
+mysql -u root ai_123 -e "
+INSERT INTO update_history (
+    title, 
+    version, 
+    shamsi_date, 
+    shamsi_time, 
+    user_problem, 
+    solution_description, 
+    tags, 
+    priority, 
+    category, 
+    status
+) VALUES (
+    'اضافه کردن API جدید کاربران',
+    '1.3.0',
+    '۱۴۰۴/۰۶/۰۲',
+    '۱۰:۳۰',
+    'نیاز به API CRUD برای مدیریت کاربران',
+    'پیاده‌سازی UserController با متدهای GET, POST, PUT, DELETE و validation کامل',
+    'api، کاربران، crud، validation',
+    'high',
+    'feature',
+    'completed'
+);"
+```
+
+### 🔧 تنظیمات دیتابیس
+
+دیتابیس `ai_123` با جدول `update_history` آماده است:
+
+```sql
+-- ساختار جدول تاریخچه
+CREATE TABLE update_history (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    title VARCHAR(255) NOT NULL,
+    version VARCHAR(50) NOT NULL,
+    shamsi_date VARCHAR(20) NOT NULL,
+    shamsi_time VARCHAR(10) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    user_problem TEXT NOT NULL,
+    solution_description TEXT NOT NULL,
+    user_comment TEXT,
+    tags TEXT,
+    priority ENUM('low', 'medium', 'high', 'critical') DEFAULT 'medium',
+    category ENUM('feature', 'bugfix', 'enhancement', 'security', 'testing') DEFAULT 'feature',
+    status ENUM('completed', 'in_progress', 'planned') DEFAULT 'completed'
+);
+```
 
 ## 📞 پشتیبانی
 

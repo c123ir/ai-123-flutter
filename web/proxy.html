@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>SMS Proxy</title>
+    <meta charset="UTF-8">
+</head>
+<body>
+    <h3>SMS Proxy Service</h3>
+    <p>این صفحه برای حل مشکل CORS در ارسال پیامک طراحی شده است.</p>
+    
+    <script>
+    // پروکسی ساده برای ارسال درخواست‌های SMS
+    async function sendSmsRequest(url, data) {
+        try {
+            const response = await fetch(url, {
+                method: 'GET',
+                mode: 'no-cors', // بایپس CORS
+                headers: {
+                    'Content-Type': 'text/plain',
+                }
+            });
+            
+            return {
+                success: true,
+                status: response.status,
+                message: 'درخواست ارسال شد'
+            };
+        } catch (error) {
+            return {
+                success: false,
+                error: error.message
+            };
+        }
+    }
+    
+    // در دسترس قرار دادن تابع برای Flutter
+    window.sendSmsProxy = sendSmsRequest;
+    </script>
+</body>
+</html>

@@ -2,8 +2,8 @@
 // تست سرویس SMS اصلی پروژه
 
 import 'dart:io';
-import 'lib/services/sms_service.dart';
-import 'lib/database/database_helper.dart';
+import '../lib/services/sms_service.dart';
+import '../lib/database/database_helper.dart';
 
 void main() async {
   print('🧪 تست سرویس SMS اصلی...');

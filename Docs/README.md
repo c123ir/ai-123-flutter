@@ -3,8 +3,8 @@
 
 ![Flutter](https://img.shields.io/badge/Flutter-02569B?style=for-the-badge&logo=flutter&logoColor=white)
 ![Dart](https://img.shields.io/badge/Dart-0175C2?style=for-the-badge&logo=dart&logoColor=white)
-![SQLite](https://img.shields.io/badge/SQLite-07405E?style=for-the-badge&logo=sqlite&logoColor=white)
 ![MySQL](https://img.shields.io/badge/MySQL-005C84?style=for-the-badge&logo=mysql&logoColor=white)
+![Node.js](https://img.shields.io/badge/Node.js-43853D?style=for-the-badge&logo=node.js&logoColor=white)
 
 ---
 
@@ -60,6 +60,12 @@
 - **عملکرد کارکنان:** ارزیابی بهره‌وری
 - **رضایت مشتریان:** نظرسنجی و بازخورد
 
+### 📋 **مدیریت تاریخچه بروزرسانی**
+- **ثبت خودکار:** ضبط تمام تغییرات پروژه در MySQL
+- **دسته‌بندی:** feature، bugfix، enhancement، security، testing
+- **اولویت‌بندی:** low، medium، high، critical
+- **گزارش‌گیری:** آمار و نمودارهای توسعه پروژه
+
 ---
 
 ## 🏗️ معماری سیستم
@@ -68,9 +74,9 @@
 ```mermaid
 graph TB
     A[Flutter Frontend] --> B[Service Layer]
-    B --> C[Local SQLite]
+    B --> C[WebDatabaseAdapter]
     B --> D[Remote API]
-    D --> E[MySQL Database]
+    D --> E[MySQL Database ai_123]
     D --> F[AI Services]
     
     subgraph "Client Side"
@@ -89,13 +95,76 @@ graph TB
 ### **لایه‌های نرم‌افزار**
 1. **Presentation Layer:** UI/UX با Flutter
 2. **Business Logic Layer:** Services و Controllers
-3. **Data Access Layer:** Models و Database Helpers
-4. **Storage Layer:** SQLite (محلی) + MySQL (سرور)
+3. **Data Access Layer:** Models و Database Adapters
+4. **Storage Layer:** WebAdapter (موقت) + MySQL (اصلی)
 
 ### **الگوهای طراحی**
-- **Repository Pattern:** مدیریت داده‌ها
+- **Adapter Pattern:** پشتیبانی از MySQL و Web Storage
 - **Service Layer Pattern:** منطق کسب و کار
 - **Model-View-Controller:** ساختار کلی
+
+## 🗄️ **پایگاه داده MySQL**
+
+### **دیتابیس: `ai_123`**
+
+#### جدول `update_history`
+```sql
+CREATE TABLE update_history (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    title VARCHAR(255) NOT NULL,
+    version VARCHAR(50) NOT NULL,
+    shamsi_date VARCHAR(20) NOT NULL,
+    shamsi_time VARCHAR(10) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    user_problem TEXT NOT NULL,
+    solution_description TEXT NOT NULL,
+    user_comment TEXT,
+    tags TEXT,
+    priority ENUM('low', 'medium', 'high', 'critical') DEFAULT 'medium',
+    category ENUM('feature', 'bugfix', 'enhancement', 'security', 'testing') DEFAULT 'feature',
+    status ENUM('completed', 'in_progress', 'planned') DEFAULT 'completed'
+);
+```
+
+### **ثبت تاریخچه بروزرسانی**
+
+#### روش مستقیم (توصیه شده):
+```bash
+mysql -u root ai_123 -e "
+INSERT INTO update_history (
+    title, version, shamsi_date, shamsi_time,
+    user_problem, solution_description, tags,
+    priority, category, status
+) VALUES (
+    'عنوان تغییر',
+    'نسخه پروژه',
+    '۱۴۰۴/۰۶/۰۱',
+    '۱۰:۳۰',
+    'شرح مشکل یا نیاز',
+    'شرح راه‌حل پیاده‌سازی شده',
+    'برچسب‌ها، جدا شده با کاما',
+    'medium',
+    'feature',
+    'completed'
+);"
+```
+
+#### مشاهده تاریخچه:
+```bash
+# آخرین تغییرات
+mysql -u root ai_123 -e "
+SELECT id, title, version, shamsi_date, priority, category 
+FROM update_history 
+ORDER BY id DESC 
+LIMIT 10;"
+
+# آمار کلی
+mysql -u root ai_123 -e "
+SELECT category, COUNT(*) as count 
+FROM update_history 
+GROUP BY category 
+ORDER BY count DESC;"
+```
 
 ---
 

@@ -2,7 +2,6 @@
 // مدیریت کننده واحد برای دیتابیس با پشتیبانی از MySQL
 
 import 'database_adapter.dart';
-import 'mysql_adapter.dart';
 
 class DatabaseManager {
   static DatabaseManager? _instance;
@@ -15,22 +14,19 @@ class DatabaseManager {
     return _instance!;
   }
 
-  Future<DatabaseAdapter> getAdapter() async {
+  static Future<DatabaseAdapter> getAdapter() async {
     if (_adapter != null) return _adapter!;
 
-    print('�️ [DatabaseManager] ایجاد MySQLAdapter');
+    print('🗄️ [DatabaseManager] ایجاد WebDatabaseAdapter موقت');
 
-    // تنظیمات MySQL
-    const String baseUrl = 'http://localhost:3000/api'; // آدرس API
-    const String apiKey = 'your-api-key-here'; // کلید API
-
-    _adapter = MySQLAdapter(baseUrl: baseUrl, apiKey: apiKey);
+    // موقتاً از WebDatabaseAdapter استفاده می‌کنیم تا MySQL سرور راه‌اندازی شود
+    _adapter = DatabaseAdapterFactory.create();
 
     await _adapter!.init();
     return _adapter!;
   }
 
-  Future<void> resetAdapter() async {
+  static Future<void> resetAdapter() async {
     if (_adapter != null) {
       await _adapter!.close();
       _adapter = null;

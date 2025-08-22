@@ -1,7 +1,9 @@
 // lib/database/database_helper.dart
 // مدیریت پایگاه داده SQLite - شامل ایجاد و مدیریت جداول
 
+import 'package:flutter/foundation.dart';
 import 'package:sqflite/sqflite.dart';
+import 'package:sqflite_common_ffi_web/sqflite_ffi_web.dart';
 import 'package:path/path.dart';
 
 class DatabaseHelper {
@@ -17,8 +19,16 @@ class DatabaseHelper {
   }
 
   Future<Database> _initDB(String filePath) async {
-    final dbPath = await getDatabasesPath();
-    final path = join(dbPath, filePath);
+    String path;
+
+    if (kIsWeb) {
+      // برای وب از sqflite_ffi_web استفاده می‌کنیم
+      path = filePath;
+    } else {
+      // برای دسکتاپ و موبایل
+      final dbPath = await getDatabasesPath();
+      path = join(dbPath, filePath);
+    }
 
     return await openDatabase(
       path,

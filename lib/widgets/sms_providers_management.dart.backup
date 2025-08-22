@@ -2,7 +2,7 @@
 // مدیریت سامانه‌های پیامکی - اضافه، ویرایش و حذف سامانه‌ها
 
 import 'package:flutter/material.dart';
-import '../database/database_helper.dart';
+import '../database/database_manager.dart';
 import '../models/sms_provider.dart';
 import '../models/sms_config.dart';
 
@@ -14,7 +14,6 @@ class SmsProvidersManagement extends StatefulWidget {
 }
 
 class _SmsProvidersManagementState extends State<SmsProvidersManagement> {
-  final DatabaseHelper _db = DatabaseHelper.instance;
   List<SmsProvider> _providers = [];
   bool _isLoading = false;
 
@@ -28,7 +27,8 @@ class _SmsProvidersManagementState extends State<SmsProvidersManagement> {
     setState(() => _isLoading = true);
 
     try {
-      final data = await _db.queryAll('sms_providers');
+      final adapter = await DatabaseManager().getAdapter();
+      final data = await adapter.query('sms_providers');
       setState(() {
         _providers = data.map((row) => SmsProvider.fromMap(row)).toList();
       });
