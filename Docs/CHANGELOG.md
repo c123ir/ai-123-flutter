@@ -7,6 +7,82 @@
 
 ---
 
+## [1.3.0] - 2025-08-23
+
+### 🚀 Added - سیستم SMS جامع
+- 📱 **معماری Clean Architecture کامل:**
+  - جداسازی Core، Features، و Shared layers
+  - پیاده‌سازی اصول SOLID و Clean Code
+  - ساختار modular و قابل نگهداری
+
+- 🔄 **سرویس SMS چند سامانه‌ای:**
+  - پشتیبانی از SMS0098، قاصدک (Ghasedak)، کاوه‌نگار (Kavenegar)
+  - سیستم fallback هوشمند بین سامانه‌ها  
+  - مدیریت configuration مجزا برای هر provider
+  - async/await pattern با exception handling
+
+- 🎨 **رابط کاربری Admin Panel:**
+  - SmsPanelScreen کامل با Material Design 3
+  - فرم ارسال پیامک با validation جامع
+  - نمایش آمار real-time (موفق، ناموفق، کل)
+  - لیست لاگ‌های ارسال با scroll
+  - Responsive design برای دسکتاپ و موبایل
+
+- 🔢 **سیستم تبدیل اعداد فارسی:**
+  - PersianNumberUtils برای تبدیل اعداد فارسی/عربی به انگلیسی
+  - اعتبارسنجی شماره موبایل ایرانی
+  - فرمت‌کردن خودکار شماره‌ها
+  - پشتیبانی از تمام اعداد فارسی (۰۱۲۳۴۵۶۷۸۹)
+
+- 🏗️ **مدل‌های داده استاندارد:**
+  - SmsProviderType enum برای انواع سامانه‌ها
+  - SmsStatus enum برای وضعیت ارسال
+  - CompleteSmsConfig برای تنظیمات
+  - SmsResult برای نتایج ارسال
+
+### 🔧 Enhanced
+- 📊 **Admin Dashboard:**
+  - اضافه کردن کارت SMS Management
+  - بهبود responsive grid layout
+  - navigation به SMS Panel
+  - Material Design 3 theming
+
+- 🎯 **تجربه کاربری:**
+  - RTL support کامل
+  - فونت Vazirmatn برای متن‌های فارسی
+  - loading states و error handling
+  - snackbar notifications
+
+- 🔒 **مدیریت خطا:**
+  - AppException hierarchy برای انواع خطاها
+  - NetworkException، ValidationException، ServiceException
+  - error logging با جزئیات کامل
+  - user-friendly error messages
+
+### 🛠️ Technical Details
+- **Architecture Pattern:** Clean Architecture
+- **State Management:** Built-in Flutter State
+- **HTTP Client:** Dio package برای network requests
+- **Styling:** Material Design 3 با custom theme
+- **Responsive:** LayoutBuilder و MediaQuery
+- **Error Handling:** Exception hierarchy و try-catch
+- **Logging:** درجه‌بندی شده (info، warning، error، success)
+
+### 📋 Files Added/Modified
+- `lib_new/core/services/sms_service.dart` - سرویس اصلی SMS
+- `lib_new/features/admin/screens/sms_panel_screen.dart` - رابط کاربری admin
+- `lib_new/shared/models/provider_configs.dart` - تنظیمات providers
+- `lib_new/shared/utils/persian_number_utils.dart` - ابزار تبدیل اعداد
+- `lib_new/features/admin/presentation/screens/admin_dashboard_screen.dart` - dashboard
+
+### 🧪 Testing
+- Browser testing در Chrome موفقیت‌آمیز
+- تست تمام functionality ها
+- responsive design verification
+- Persian number conversion validation
+
+---
+
 ## [1.3.1] - 2025-08-22
 
 ### Added
