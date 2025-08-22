@@ -7,6 +7,44 @@
 
 ---
 
+## [1.3.0] - 2025-08-22
+
+### Changed
+- 🗄️ **مهاجرت کامل از SQLite به MySQL:**
+  - حذف کامل SQLite و dependencies مربوطه
+  - پیاده‌سازی MySQLAdapter برای ارتباط با API
+  - DatabaseManager بروزرسانی شده با Singleton pattern
+  - معماری یکپارچه برای تمام پلتفرم‌ها (Web/Desktop/Mobile)
+
+### Added
+- 🔧 **Backend API سرور:**
+  - Node.js + Express + MySQL سرور کامل
+  - RESTful API endpoints برای SMS و Update History
+  - Authentication با API keys
+  - CORS handling برای Flutter Web
+  - Error handling و logging جامع
+
+- 🏗️ **معماری جدید Database:**
+  - `database_adapter.dart`: رابط انتزاعی
+  - `mysql_adapter.dart`: HTTP API integration
+  - `database_manager.dart`: مدیریت کننده واحد
+  - Schema کامل MySQL با بهینه‌سازی
+
+### Enhanced
+- ⚡ **بهبود عملکرد:**
+  - همگام‌سازی فوری داده‌ها در همه دستگاه‌ها
+  - مقیاس‌پذیری برای هزاران کاربر
+  - یکپارچگی داده‌ها بین پلتفرم‌ها
+  - کاهش پیچیدگی کد
+
+### Removed
+- ❌ **حذف Dependencies:**
+  - `sqflite_common_ffi`
+  - `sqflite_common_ffi_web` 
+  - تمام کدهای SQLite محلی
+
+---
+
 ## [1.2.0] - 2025-08-21
 
 ### Added
